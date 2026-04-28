@@ -19,6 +19,18 @@
   }
 }
 
+/* Date-change slide-in animation */
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@layer utilities {
+  .animate-slide-in {
+    animation: slide-in 0.18s ease both;
+  }
+}
+
 /* Rendered markdown checkbox styling (Tailwind Typography doesn't cover these) */
 @layer utilities {
   .prose .task-item {
@@ -37,5 +49,21 @@
     border-radius: 0.25rem;
     cursor: default;
     accent-color: #1c1917; /* stone-900 */
+  }
+
+  /* Contenteditable live editor */
+  .live-editor {
+    caret-color: #1c1917; /* stone-900 */
+  }
+  .dark .live-editor {
+    caret-color: #f5f5f4; /* stone-100 */
+  }
+  .live-editor:empty::before {
+    content: attr(data-placeholder);
+    color: #d6d3d1; /* stone-300 */
+    pointer-events: none;
+  }
+  .dark .live-editor:empty::before {
+    color: #57534e; /* stone-600 */
   }
 }

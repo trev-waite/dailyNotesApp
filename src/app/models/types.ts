@@ -8,6 +8,7 @@ export interface TodoItem {
   checked: boolean;
   date: string;
   lineIndex: number;
+  children?: TodoItem[];
 }
 
 export interface SlashCommand {

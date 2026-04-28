@@ -1,4 +1,4 @@
-import { Component, inject, output } from '@angular/core';
+import { Component, HostListener, inject, output } from '@angular/core';
 import { NoteStorageService } from '../../services/note-storage.service';
 import { ThemeService } from '../../services/theme.service';
 
@@ -19,5 +19,10 @@ export class SettingsComponent {
 
   close(): void {
     this.closed.emit();
+  }
+
+  @HostListener('document:keydown.Escape')
+  onEscape(): void {
+    this.close();
   }
 }

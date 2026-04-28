@@ -70,6 +70,12 @@ export class SlashCommandService {
       description: 'Checklist item',
       snippet: '- [ ] ',
     },
+    {
+      id: 'sub-todo',
+      label: '/sub-todo',
+      description: 'Sub-checklist item',
+      snippet: '  - [ ] ',
+    },
   ];
 
   filter(query: string): SlashCommand[] {

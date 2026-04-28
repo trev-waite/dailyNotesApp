@@ -74,6 +74,7 @@ export class AppComponent implements OnInit {
   private touchStartX = 0;
   private touchStartY = 0;
   private readonly SWIPE_THRESHOLD = 80;
+  private lastWheel = 0;
 
   onTouchStart(e: TouchEvent): void {
     this.touchStartX = e.touches[0].clientX;
@@ -84,16 +85,15 @@ export class AppComponent implements OnInit {
     const dx = e.changedTouches[0].clientX - this.touchStartX;
     const dy = e.changedTouches[0].clientY - this.touchStartY;
     if (Math.abs(dx) > this.SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      dx < 0 ? this.goNextDay() : this.goPrevDay();
+      this.navigateDay(dx < 0 ? 1 : -1);
     }
   }
 
-  goNextDay(): void {
-    this.navigateDay(1);
-  }
-
-  goPrevDay(): void {
-    this.navigateDay(-1);
+  onWheel(e: WheelEvent): void {
+    const now = Date.now();
+    if (now - this.lastWheel < 300) return;
+    this.lastWheel = now;
+    this.navigateDay(e.deltaY > 0 ? 1 : -1);
   }
 
   onDateSelected(date: string): void {
