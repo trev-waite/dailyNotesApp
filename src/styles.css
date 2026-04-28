@@ -1,0 +1,41 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@source "../src";
+
+/* Class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Base styles */
+@layer base {
+  html {
+    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+/* Rendered markdown checkbox styling (Tailwind Typography doesn't cover these) */
+@layer utilities {
+  .prose .task-item {
+    list-style: none;
+    margin-left: -1.5em;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5em;
+  }
+
+  .prose .task-checkbox {
+    margin-top: 0.2em;
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 0.25rem;
+    cursor: default;
+    accent-color: #1c1917; /* stone-900 */
+  }
+}

@@ -1,0 +1,72 @@
+<!-- Backdrop -->
+<div
+  class="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+  (click)="close()"
+></div>
+
+<!-- Panel -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="w-full max-w-sm rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-xl flex flex-col gap-0 overflow-hidden">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between px-5 py-4 border-b border-stone-100 dark:border-stone-800">
+      <h2 class="text-sm font-semibold text-stone-800 dark:text-stone-100">Settings</h2>
+      <button
+        (click)="close()"
+        class="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:hover:text-stone-200 dark:hover:bg-stone-800 transition-colors"
+        aria-label="Close settings"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="flex flex-col divide-y divide-stone-100 dark:divide-stone-800">
+
+      <!-- Theme toggle -->
+      <div class="flex items-center justify-between px-5 py-4">
+        <div>
+          <p class="text-sm font-medium text-stone-800 dark:text-stone-100">Appearance</p>
+          <p class="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+            {{ theme.isDark() ? 'Dark mode' : 'Light mode' }}
+          </p>
+        </div>
+        <button
+          (click)="theme.toggle()"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+          [class]="theme.isDark()
+            ? 'bg-stone-700'
+            : 'bg-stone-200'"
+          role="switch"
+          [attr.aria-checked]="theme.isDark()"
+          aria-label="Toggle dark mode"
+        >
+          <span
+            class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+            [class]="theme.isDark() ? 'translate-x-6' : 'translate-x-1'"
+          ></span>
+        </button>
+      </div>
+
+      <!-- Notes folder -->
+      <div class="flex items-center justify-between px-5 py-4">
+        <div class="min-w-0 flex-1 mr-4">
+          <p class="text-sm font-medium text-stone-800 dark:text-stone-100">Notes folder</p>
+          <p class="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
+            {{ storage.notesDir() || 'No folder selected' }}
+          </p>
+        </div>
+        <button
+          (click)="changeFolder()"
+          class="shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition-colors"
+        >
+          Change
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+</div>

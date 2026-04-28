@@ -1,0 +1,52 @@
+<div class="flex items-center gap-1 px-4 py-3">
+  <!-- Left arrow -->
+  <button
+    (click)="prev()"
+    class="p-2 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:text-stone-500 dark:hover:text-stone-200 dark:hover:bg-stone-800 transition-colors"
+    aria-label="Previous day"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+  </button>
+
+  <!-- Day chips -->
+  <div class="flex flex-1 justify-around">
+    @for (day of days(); track day.date) {
+      <button
+        (click)="select(day.date)"
+        class="flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-xl transition-colors min-w-[2.75rem]"
+        [class.bg-stone-900]="day.isSelected"
+        [class.text-white]="day.isSelected"
+        [class.dark:bg-stone-100]="day.isSelected"
+        [class.dark:text-stone-900]="day.isSelected"
+        [class.text-stone-400]="!day.isSelected"
+        [class.dark:text-stone-500]="!day.isSelected"
+        [class.hover:bg-stone-100]="!day.isSelected"
+        [class.dark:hover:bg-stone-800]="!day.isSelected"
+      >
+        <span class="text-[11px] font-medium tracking-wide uppercase">{{ day.dayName }}</span>
+        <span class="text-base font-semibold leading-none">{{ day.dayNum }}</span>
+        <!-- Note dot -->
+        <span
+          class="w-1 h-1 rounded-full mt-0.5"
+          [class.bg-white]="day.hasNote && day.isSelected"
+          [class.bg-stone-400]="day.hasNote && !day.isSelected"
+          [class.dark:bg-stone-500]="day.hasNote && !day.isSelected"
+          [class.invisible]="!day.hasNote"
+        ></span>
+      </button>
+    }
+  </div>
+
+  <!-- Right arrow -->
+  <button
+    (click)="next()"
+    class="p-2 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 dark:text-stone-500 dark:hover:text-stone-200 dark:hover:bg-stone-800 transition-colors"
+    aria-label="Next day"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+  </button>
+</div>
