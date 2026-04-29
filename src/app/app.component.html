@@ -2,7 +2,7 @@
 
   <!-- Sidebar -->
   <aside class="flex flex-col w-52 shrink-0 border-r border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900" data-tauri-drag-region>
-    <div class="px-5 py-4 border-b border-stone-200 dark:border-stone-800" data-tauri-drag-region>
+    <div class="px-5 pt-8 pb-4 border-b border-stone-200 dark:border-stone-800 select-none" data-tauri-drag-region>
       <span class="text-base font-bold text-stone-900 dark:text-stone-100 tracking-tight">Daylog</span>
     </div>
 
@@ -38,9 +38,23 @@
 
     <!-- Date header -->
     <div
-      class="relative px-6 py-3 shrink-0 text-center group"
+      class="relative px-6 py-3 shrink-0 text-center group select-none"
       data-tauri-drag-region
     >
+      <button
+        (click)="navigateDay(-1)"
+        aria-label="Previous day"
+        class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-150 select-none"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+      </button>
+      <button
+        (click)="navigateDay(1)"
+        aria-label="Next day"
+        class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-150 select-none"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+      </button>
       <p class="text-sm font-medium text-stone-500 dark:text-stone-400">{{ formattedDate() }}</p>
       @if ((todosRef?.totalCount() ?? 0) > 0) {
         <div class="w-20 h-1 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden mx-auto mt-2.5">
@@ -53,7 +67,7 @@
       @if (currentDate() !== todayStr()) {
         <button
           (click)="currentDate.set(todayStr())"
-          class="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-sm"
+          class="absolute right-12 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-sm select-none"
         >Today</button>
       }
     </div>
@@ -72,23 +86,8 @@
       (mousedown)="startResize($event)"
     ></div>
 
-    <!-- Day editor (fills remaining space, arrows floated inside) -->
+    <!-- Day editor (fills remaining space) -->
     <div class="relative flex-1 overflow-hidden flex flex-col">
-      <button
-        (click)="navigateDay(-1)"
-        class="nav-arrow left-2"
-        aria-label="Previous day"
-      >
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-      </button>
-      <button
-        (click)="navigateDay(1)"
-        class="nav-arrow right-2"
-        aria-label="Next day"
-      >
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-      </button>
-
       <app-day-editor
         class="flex flex-col flex-1"
         [date]="currentDate()"
