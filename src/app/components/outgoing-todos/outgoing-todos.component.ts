@@ -25,7 +25,7 @@ export class OutgoingTodosComponent implements OnInit {
   readonly currentDate = input.required<string>();
   readonly todoAdded = output<void>();
 
-  private readonly noteContents = signal<Map<string, string>>(new Map());
+  private readonly todoContents = signal<Map<string, string>>(new Map());
 
   readonly currentLineIndented = signal(false);
 
@@ -35,9 +35,19 @@ export class OutgoingTodosComponent implements OnInit {
   }
 
   readonly todos = computed<TodoItem[]>(() => {
+    const today = this.currentDate();
+    const isVisible = (t: TodoItem) =>
+      t.date <= today && (!t.checked || t.date === today);
+
     const result: TodoItem[] = [];
-    this.noteContents().forEach((content, date) => {
-      result.push(...this.markdown.extractTodos(date, content));
+    this.todoContents().forEach((content, date) => {
+      for (const todo of this.markdown.extractTodos(date, content)) {
+        if (!isVisible(todo)) continue;
+        if (todo.children?.length) {
+          todo.children = todo.children.filter(isVisible);
+        }
+        result.push(todo);
+      }
     });
     return result.sort((a, b) => a.date.localeCompare(b.date));
   });
@@ -50,31 +60,31 @@ export class OutgoingTodosComponent implements OnInit {
   }
 
   async loadAll(): Promise<void> {
-    const dates = await this.storage.listNotes();
+    const dates = await this.storage.listTodoFiles();
     const map = new Map<string, string>();
     await Promise.all(
       dates.map(async (date) => {
-        const content = await this.storage.readNote(date);
+        const content = await this.storage.readTodos(date);
         map.set(date, content);
       }),
     );
-    this.noteContents.set(map);
+    this.todoContents.set(map);
   }
 
   async toggleTodo(todo: TodoItem): Promise<void> {
-    const contents = new Map(this.noteContents());
+    const contents = new Map(this.todoContents());
     const content = contents.get(todo.date) ?? '';
     const updated = this.markdown.toggleCheckbox(content, todo.lineIndex);
     contents.set(todo.date, updated);
-    this.noteContents.set(contents);
-    await this.storage.writeNote(todo.date, updated);
+    this.todoContents.set(contents);
+    await this.storage.writeTodos(todo.date, updated);
   }
 
   /** Reload after external changes (called by AppComponent after saves) */
   async refresh(date: string, content: string): Promise<void> {
-    const contents = new Map(this.noteContents());
+    const contents = new Map(this.todoContents());
     contents.set(date, content);
-    this.noteContents.set(contents);
+    this.todoContents.set(contents);
   }
 
   onInputKeydown(e: KeyboardEvent): void {
@@ -101,7 +111,7 @@ export class OutgoingTodosComponent implements OnInit {
     const lines = el.value.split('\n').filter(l => l.trim());
     if (!lines.length) return;
     const date = this.currentDate();
-    const contents = new Map(this.noteContents());
+    const contents = new Map(this.todoContents());
     const existing = contents.get(date) ?? '';
     const newLines = lines.map(line => {
       const indented = line.startsWith('  ');
@@ -109,8 +119,8 @@ export class OutgoingTodosComponent implements OnInit {
     });
     const updated = existing ? `${existing}\n${newLines.join('\n')}` : newLines.join('\n');
     contents.set(date, updated);
-    this.noteContents.set(contents);
-    await this.storage.writeNote(date, updated);
+    this.todoContents.set(contents);
+    await this.storage.writeTodos(date, updated);
     this.todoAdded.emit();
     el.value = '';
     this.currentLineIndented.set(false);

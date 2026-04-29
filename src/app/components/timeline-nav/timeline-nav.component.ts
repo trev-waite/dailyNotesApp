@@ -49,8 +49,16 @@ export class TimelineNavComponent {
     });
   });
 
+  readonly todayDate = toDateStr(new Date());
+
+  isToday = computed(() => this.selectedDate() === this.todayDate);
+
   select(date: string): void {
     this.dateSelected.emit(date);
+  }
+
+  goToToday(): void {
+    this.dateSelected.emit(this.todayDate);
   }
 
   prev(): void {

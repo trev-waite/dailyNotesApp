@@ -73,7 +73,6 @@ export class DayEditorComponent implements AfterViewInit, OnChanges {
     if (changes['date']) {
       this.animKey.update(k => k + 1);
       this.isEditing = false;
-      setTimeout(() => this.updateLiveEditor());
     }
     if (changes['content'] && !this.isEditing) {
       setTimeout(() => this.updateLiveEditor());

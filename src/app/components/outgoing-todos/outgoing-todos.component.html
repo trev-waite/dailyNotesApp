@@ -1,16 +1,4 @@
 <div class="h-full flex flex-col">
-  <!-- Header -->
-  <div class="flex items-center justify-between px-5 py-3 border-b border-stone-100 dark:border-stone-800 shrink-0">
-    <span class="text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
-      Todos
-    </span>
-    @if (totalCount() > 0) {
-      <span class="text-xs font-medium text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full">
-        {{ checkedCount() }} / {{ totalCount() }}
-      </span>
-    }
-  </div>
-
   <!-- Reusable checkbox + label fragment -->
   <ng-template #checkboxItem let-todo>
     <button

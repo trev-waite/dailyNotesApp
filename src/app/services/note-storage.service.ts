@@ -1,6 +1,5 @@
 import { Injectable, signal } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
-import { TodoItem } from '../models/types';
 
 const NOTES_DIR_KEY = 'notesDir';
 
@@ -37,14 +36,21 @@ export class NoteStorageService {
     return invoke<string[]>('list_notes', { notesDir: dir });
   }
 
-  toggleTodo(content: string, lineIndex: number): string {
-    const lines = content.split('\n');
-    const line = lines[lineIndex] ?? '';
-    if (line.includes('- [ ]')) {
-      lines[lineIndex] = line.replace('- [ ]', '- [x]');
-    } else if (line.includes('- [x]') || line.includes('- [X]')) {
-      lines[lineIndex] = line.replace(/- \[[xX]\]/, '- [ ]');
-    }
-    return lines.join('\n');
+  async readTodos(date: string): Promise<string> {
+    const dir = this.notesDir();
+    if (!dir) return '';
+    return invoke<string>('read_todos', { notesDir: dir, date });
+  }
+
+  async writeTodos(date: string, content: string): Promise<void> {
+    const dir = this.notesDir();
+    if (!dir) return;
+    await invoke<void>('write_todos', { notesDir: dir, date, content });
+  }
+
+  async listTodoFiles(): Promise<string[]> {
+    const dir = this.notesDir();
+    if (!dir) return [];
+    return invoke<string[]>('list_todo_files', { notesDir: dir });
   }
 }

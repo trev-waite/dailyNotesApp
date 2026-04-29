@@ -16,7 +16,8 @@ import { OutgoingTodosComponent } from './components/outgoing-todos/outgoing-tod
 import { SettingsComponent } from './components/settings/settings.component';
 
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
@@ -36,6 +37,7 @@ export class AppComponent implements OnInit {
   @ViewChild(OutgoingTodosComponent) todosRef?: OutgoingTodosComponent;
 
   readonly currentDate = signal(todayStr());
+  readonly todayStr = todayStr;
   readonly currentContent = signal('');
   readonly allNoteDates = signal<Set<string>>(new Set());
   readonly saveStatus = signal<SaveStatus>('idle');
@@ -83,7 +85,6 @@ export class AppComponent implements OnInit {
         this.saveStatus.set('saved');
         setTimeout(() => this.saveStatus.set('idle'), 1500);
         void this.refreshNotesList();
-        this.todosRef?.refresh(this.currentDate(), this.currentContent());
       });
   }
 
@@ -107,7 +108,7 @@ export class AppComponent implements OnInit {
     const [y, m, d] = this.currentDate().split('-').map(Number);
     const date = new Date(y, m - 1, d);
     date.setDate(date.getDate() + delta);
-    this.currentDate.set(date.toISOString().slice(0, 10));
+    this.currentDate.set(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
   }
 
   onContentChange(content: string): void {
@@ -121,6 +122,7 @@ export class AppComponent implements OnInit {
 
   private async loadNote(date: string): Promise<void> {
     const content = await this.storage.readNote(date);
+    if (this.currentDate() !== date) return;
     this.currentContent.set(content);
     this.saveStatus.set('idle');
   }

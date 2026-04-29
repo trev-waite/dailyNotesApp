@@ -1,4 +1,4 @@
-<div class="flex items-center gap-1 px-4 py-3">
+<div class="relative flex items-center gap-1 px-4 py-3 group">
   <!-- Left arrow -->
   <button
     (click)="prev()"
@@ -9,6 +9,15 @@
       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
     </svg>
   </button>
+
+  <!-- Today button (appears on hover) -->
+  @if (!isToday()) {
+    <button
+      (click)="goToToday()"
+      class="absolute left-1/2 -translate-x-1/2 top-1 z-10 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-sm"
+      aria-label="Go to today"
+    >today</button>
+  }
 
   <!-- Day chips -->
   <div class="flex flex-1 justify-around">
