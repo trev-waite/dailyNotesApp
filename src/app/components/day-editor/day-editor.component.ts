@@ -302,10 +302,9 @@ export class DayEditorComponent implements AfterViewInit, OnChanges {
     const div = this.liveEditorRef()?.nativeElement;
     if (!div) return;
     const markdown = this.markdownSvc.toMarkdown(div);
+    this.isEditing = true;
     this.contentChange.emit(`${markdown}\n- [ ] ${selected}`);
     this.showMakeTodo.set(false);
-    this.isEditing = false;
-    setTimeout(() => this.updateLiveEditor());
   }
 
   /** Exposed to template for toolbar active-state checks. */

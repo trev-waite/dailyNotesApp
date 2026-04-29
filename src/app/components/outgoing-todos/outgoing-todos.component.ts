@@ -3,6 +3,8 @@ import {
   OnInit,
   computed,
   inject,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -20,8 +22,17 @@ export class OutgoingTodosComponent implements OnInit {
   private readonly storage = inject(NoteStorageService);
   private readonly markdown = inject(MarkdownService);
 
-  /** Map of date → raw content, loaded once and updated on toggle */
+  readonly currentDate = input.required<string>();
+  readonly todoAdded = output<void>();
+
   private readonly noteContents = signal<Map<string, string>>(new Map());
+
+  readonly currentLineIndented = signal(false);
+
+  updateIndentIndicator(el: HTMLTextAreaElement): void {
+    const lineStart = el.value.lastIndexOf('\n', el.selectionStart - 1) + 1;
+    this.currentLineIndented.set(el.value.slice(lineStart, lineStart + 2) === '  ');
+  }
 
   readonly todos = computed<TodoItem[]>(() => {
     const result: TodoItem[] = [];
@@ -33,8 +44,6 @@ export class OutgoingTodosComponent implements OnInit {
 
   readonly checkedCount = computed(() => this.todos().filter((t) => t.checked).length);
   readonly totalCount = computed(() => this.todos().length);
-
-  isCollapsed = signal(false);
 
   async ngOnInit(): Promise<void> {
     await this.loadAll();
@@ -61,14 +70,49 @@ export class OutgoingTodosComponent implements OnInit {
     await this.storage.writeNote(todo.date, updated);
   }
 
-  toggleCollapse(): void {
-    this.isCollapsed.update((v) => !v);
-  }
-
   /** Reload after external changes (called by AppComponent after saves) */
   async refresh(date: string, content: string): Promise<void> {
     const contents = new Map(this.noteContents());
     contents.set(date, content);
     this.noteContents.set(contents);
+  }
+
+  onInputKeydown(e: KeyboardEvent): void {
+    const el = e.target as HTMLTextAreaElement;
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      void this.flushTodos(el);
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    const { selectionStart, value } = el;
+    const lineStart = value.lastIndexOf('\n', selectionStart - 1) + 1;
+    const indented = value.slice(lineStart, lineStart + 2) === '  ';
+    el.value = indented
+      ? value.slice(0, lineStart) + value.slice(lineStart + 2)
+      : value.slice(0, lineStart) + '  ' + value.slice(lineStart);
+    const next = Math.max(lineStart, selectionStart + (indented ? -2 : 2));
+    el.selectionStart = next;
+    el.selectionEnd = next;
+  }
+
+  async flushTodos(el: HTMLTextAreaElement): Promise<void> {
+    const lines = el.value.split('\n').filter(l => l.trim());
+    if (!lines.length) return;
+    const date = this.currentDate();
+    const contents = new Map(this.noteContents());
+    const existing = contents.get(date) ?? '';
+    const newLines = lines.map(line => {
+      const indented = line.startsWith('  ');
+      return `${indented ? '  ' : ''}- [ ] ${line.trim()}`;
+    });
+    const updated = existing ? `${existing}\n${newLines.join('\n')}` : newLines.join('\n');
+    contents.set(date, updated);
+    this.noteContents.set(contents);
+    await this.storage.writeNote(date, updated);
+    this.todoAdded.emit();
+    el.value = '';
+    this.currentLineIndented.set(false);
   }
 }

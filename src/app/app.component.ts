@@ -2,6 +2,7 @@ import {
   Component,
   OnInit,
   ViewChild,
+  computed,
   effect,
   inject,
   signal,
@@ -10,7 +11,6 @@ import { Subject, debounceTime, switchMap, from, tap } from 'rxjs';
 
 import { NoteStorageService } from './services/note-storage.service';
 import { ThemeService } from './services/theme.service';
-import { TimelineNavComponent } from './components/timeline-nav/timeline-nav.component';
 import { DayEditorComponent } from './components/day-editor/day-editor.component';
 import { OutgoingTodosComponent } from './components/outgoing-todos/outgoing-todos.component';
 import { SettingsComponent } from './components/settings/settings.component';
@@ -20,11 +20,12 @@ function todayStr(): string {
 }
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
+type Section = 'today' | 'timeline' | 'calendar' | 'search';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [TimelineNavComponent, DayEditorComponent, OutgoingTodosComponent, SettingsComponent],
+  imports: [DayEditorComponent, OutgoingTodosComponent, SettingsComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -39,6 +40,28 @@ export class AppComponent implements OnInit {
   readonly allNoteDates = signal<Set<string>>(new Set());
   readonly saveStatus = signal<SaveStatus>('idle');
   readonly showSettings = signal(false);
+  readonly activeSection = signal<Section>('today');
+  readonly todosPanelHeight = signal(220);
+
+  readonly formattedDate = computed(() => {
+    const [y, m, d] = this.currentDate().split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
+  });
+
+  private dragStartY = 0;
+  private dragStartHeight = 0;
+  private readonly onMouseMove = (e: MouseEvent) => {
+    const delta = e.clientY - this.dragStartY;
+    this.todosPanelHeight.set(Math.max(80, this.dragStartHeight + delta));
+  };
+  private readonly onMouseUp = () => {
+    document.removeEventListener('mousemove', this.onMouseMove);
+    document.removeEventListener('mouseup', this.onMouseUp);
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
 
   private readonly saveSubject = new Subject<{ date: string; content: string }>();
 
@@ -71,33 +94,20 @@ export class AppComponent implements OnInit {
     await this.refreshNotesList();
   }
 
-  private touchStartX = 0;
-  private touchStartY = 0;
-  private readonly SWIPE_THRESHOLD = 80;
-  private lastWheel = 0;
-
-  onTouchStart(e: TouchEvent): void {
-    this.touchStartX = e.touches[0].clientX;
-    this.touchStartY = e.touches[0].clientY;
+  startResize(e: MouseEvent): void {
+    this.dragStartY = e.clientY;
+    this.dragStartHeight = this.todosPanelHeight();
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', this.onMouseMove);
+    document.addEventListener('mouseup', this.onMouseUp);
   }
 
-  onTouchEnd(e: TouchEvent): void {
-    const dx = e.changedTouches[0].clientX - this.touchStartX;
-    const dy = e.changedTouches[0].clientY - this.touchStartY;
-    if (Math.abs(dx) > this.SWIPE_THRESHOLD && Math.abs(dx) > Math.abs(dy) * 1.5) {
-      this.navigateDay(dx < 0 ? 1 : -1);
-    }
-  }
-
-  onWheel(e: WheelEvent): void {
-    const now = Date.now();
-    if (now - this.lastWheel < 300) return;
-    this.lastWheel = now;
-    this.navigateDay(e.deltaY > 0 ? 1 : -1);
-  }
-
-  onDateSelected(date: string): void {
-    this.currentDate.set(date);
+  navigateDay(delta: number): void {
+    const [y, m, d] = this.currentDate().split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + delta);
+    this.currentDate.set(date.toISOString().slice(0, 10));
   }
 
   onContentChange(content: string): void {
@@ -105,10 +115,8 @@ export class AppComponent implements OnInit {
     this.saveSubject.next({ date: this.currentDate(), content });
   }
 
-  private navigateDay(delta: number): void {
-    const d = new Date(this.currentDate() + 'T00:00:00');
-    d.setDate(d.getDate() + delta);
-    this.currentDate.set(d.toISOString().slice(0, 10));
+  onTodoAdded(): void {
+    void this.refreshNotesList();
   }
 
   private async loadNote(date: string): Promise<void> {
@@ -122,3 +130,4 @@ export class AppComponent implements OnInit {
     this.allNoteDates.set(new Set(dates));
   }
 }
+

@@ -31,8 +31,109 @@
   }
 }
 
-/* Rendered markdown checkbox styling (Tailwind Typography doesn't cover these) */
-@layer utilities {
+/* Sidebar nav item */
+  .sidebar-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: rgb(120 113 108); /* stone-500 */
+    transition: background-color 0.1s, color 0.1s;
+    text-align: left;
+    cursor: pointer;
+  }
+  .sidebar-nav-item:hover {
+    background-color: rgb(245 245 244); /* stone-100 */
+    color: rgb(28 25 23); /* stone-900 */
+  }
+  :is(.dark) .sidebar-nav-item:hover {
+    background-color: rgb(41 37 36); /* stone-800 */
+    color: rgb(231 229 228); /* stone-200 */
+  }
+  .sidebar-nav-item.active {
+    background-color: rgb(231 229 228); /* stone-200 */
+    color: rgb(28 25 23); /* stone-900 */
+    font-weight: 500;
+  }
+  :is(.dark) .sidebar-nav-item.active {
+    background-color: rgb(41 37 36); /* stone-800 */
+    color: rgb(231 229 228); /* stone-200 */
+  }
+
+  /* Resize handle between todos and editor */
+  .resize-handle {
+    height: 5px;
+    cursor: row-resize;
+    background-color: rgb(231 229 228); /* stone-200 */
+    transition: background-color 0.15s;
+  }
+  .resize-handle:hover {
+    background-color: rgb(168 162 158); /* stone-400 */
+  }
+  :is(.dark) .resize-handle {
+    background-color: rgb(68 64 60); /* stone-700 */
+  }
+  :is(.dark) .resize-handle:hover {
+    background-color: rgb(120 113 108); /* stone-500 */
+  }
+
+  .resize-handle-thin {
+    height: 9px;
+    cursor: row-resize;
+    background-color: transparent;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .resize-handle-thin::after {
+    content: '';
+    position: absolute;
+    inset: 4px 0;
+    height: 1px;
+    background-color: rgb(231 229 228); /* stone-200 */
+    transition: background-color 0.15s;
+  }
+  .resize-handle-thin:hover::after {
+    background-color: rgb(168 162 158); /* stone-400 */
+  }
+  :is(.dark) .resize-handle-thin::after {
+    background-color: rgb(68 64 60); /* stone-700 */
+  }
+  :is(.dark) .resize-handle-thin:hover::after {
+    background-color: rgb(120 113 108); /* stone-500 */
+  }
+
+  /* Transparent day-navigation arrow buttons */
+  .nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    color: rgb(168 162 158); /* stone-400 */
+    background-color: transparent;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .nav-arrow:hover {
+    background-color: rgba(120, 113, 108, 0.12);
+    color: rgb(28 25 23); /* stone-900 */
+  }
+  :is(.dark) .nav-arrow {
+    color: rgb(87 83 78); /* stone-600 */
+  }
+  :is(.dark) .nav-arrow:hover {
+    background-color: rgba(120, 113, 108, 0.2);
+    color: rgb(231 229 228); /* stone-200 */
+  }
+
+  /* Rendered markdown checkbox styling */
   .prose .task-item {
     list-style: none;
     margin-left: -1.5em;
@@ -66,4 +167,3 @@
   .dark .live-editor:empty::before {
     color: #57534e; /* stone-600 */
   }
-}
