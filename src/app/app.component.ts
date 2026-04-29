@@ -11,6 +11,7 @@ import { Subject, debounceTime, switchMap, from, tap } from 'rxjs';
 
 import { NoteStorageService } from './services/note-storage.service';
 import { ThemeService } from './services/theme.service';
+import { CalendarNavComponent } from './components/calendar-nav/calendar-nav.component';
 import { DayEditorComponent } from './components/day-editor/day-editor.component';
 import { OutgoingTodosComponent } from './components/outgoing-todos/outgoing-todos.component';
 import { SettingsComponent } from './components/settings/settings.component';
@@ -26,7 +27,7 @@ type Section = 'today' | 'timeline' | 'calendar' | 'search';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [DayEditorComponent, OutgoingTodosComponent, SettingsComponent],
+  imports: [CalendarNavComponent, DayEditorComponent, OutgoingTodosComponent, SettingsComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -40,6 +41,7 @@ export class AppComponent implements OnInit {
   readonly todayStr = todayStr;
   readonly currentContent = signal('');
   readonly allNoteDates = signal<Set<string>>(new Set());
+  readonly allTodoDates = signal<Set<string>>(new Set());
   readonly saveStatus = signal<SaveStatus>('idle');
   readonly showSettings = signal(false);
   readonly activeSection = signal<Section>('today');
@@ -128,8 +130,12 @@ export class AppComponent implements OnInit {
   }
 
   private async refreshNotesList(): Promise<void> {
-    const dates = await this.storage.listNotes();
-    this.allNoteDates.set(new Set(dates));
+    const [notes, todos] = await Promise.all([
+      this.storage.listNotes(),
+      this.storage.listTodoFiles(),
+    ]);
+    this.allNoteDates.set(new Set(notes));
+    this.allTodoDates.set(new Set(todos));
   }
 }
 

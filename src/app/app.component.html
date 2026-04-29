@@ -23,6 +23,17 @@
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803a7.5 7.5 0 0 0 10.607 0z"/></svg>
         Search
       </button>
+
+      @if (activeSection() === 'calendar') {
+        <div class="mt-1.5 pt-2 border-t border-stone-200 dark:border-stone-800 px-1">
+          <app-calendar-nav
+            [selectedDate]="currentDate()"
+            [noteDates]="allNoteDates()"
+            [todoDates]="allTodoDates()"
+            (dateSelected)="currentDate.set($event)"
+          />
+        </div>
+      }
     </nav>
 
     <div class="px-2 pb-3 border-t border-stone-200 dark:border-stone-800 pt-2">
