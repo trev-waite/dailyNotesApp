@@ -1,8 +1,14 @@
 use std::path::PathBuf;
 
+/// Validates that `date` is exactly in YYYY-MM-DD format (digits only, correct separators).
 fn validate_date(date: &str) -> bool {
-    let re = regex::Regex::new(r"^\d{4}-\d{2}-\d{2}$").unwrap();
-    re.is_match(date)
+    let bytes = date.as_bytes();
+    bytes.len() == 10
+        && bytes[4] == b'-'
+        && bytes[7] == b'-'
+        && bytes[..4].iter().all(u8::is_ascii_digit)
+        && bytes[5..7].iter().all(u8::is_ascii_digit)
+        && bytes[8..].iter().all(u8::is_ascii_digit)
 }
 
 fn note_path(notes_dir: &str, date: &str) -> Result<PathBuf, String> {

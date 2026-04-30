@@ -7,7 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { NoteStorageService } from '../../services/note-storage.service';
 import { MarkdownService } from '../../services/markdown.service';
 import { TodoItem } from '../../models/types';
@@ -15,7 +15,7 @@ import { TodoItem } from '../../models/types';
 @Component({
   selector: 'app-outgoing-todos',
   standalone: true,
-  imports: [CommonModule],
+  imports: [NgTemplateOutlet],
   templateUrl: './outgoing-todos.component.html',
 })
 export class OutgoingTodosComponent implements OnInit {

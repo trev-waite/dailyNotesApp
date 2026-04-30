@@ -7,6 +7,7 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { formatDateString, todayString } from '../../utils/date';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -15,8 +16,9 @@ const MONTH_NAMES = [
 
 const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+function currentYearMonth(): { year: number; month: number } {
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() };
 }
 
 const CELL_BASE =
@@ -68,14 +70,11 @@ export class CalendarNavComponent {
   readonly todoDates = input<Set<string>>(new Set());
   readonly dateSelected = output<string>();
 
-  readonly today = toDateStr(new Date());
+  readonly today = todayString();
   readonly DAY_LABELS = DAY_LABELS;
   readonly MONTH_NAMES = MONTH_NAMES;
 
-  readonly viewMonth = signal({
-    year: new Date().getFullYear(),
-    month: new Date().getMonth(),
-  });
+  readonly viewMonth = signal(currentYearMonth());
 
   private initialized = false;
 
@@ -116,7 +115,7 @@ export class CalendarNavComponent {
     return Array.from({ length: 42 }, (_, i) => {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
-      const date = toDateStr(d);
+      const date = formatDateString(d);
       const base: DayBase = {
         date,
         dayNum: d.getDate(),

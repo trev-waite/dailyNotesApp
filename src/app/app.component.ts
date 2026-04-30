@@ -7,19 +7,16 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime, switchMap, from, tap } from 'rxjs';
 
 import { NoteStorageService } from './services/note-storage.service';
 import { ThemeService } from './services/theme.service';
+import { formatDateString, todayString } from './utils/date';
 import { CalendarNavComponent } from './components/calendar-nav/calendar-nav.component';
 import { DayEditorComponent } from './components/day-editor/day-editor.component';
 import { OutgoingTodosComponent } from './components/outgoing-todos/outgoing-todos.component';
 import { SettingsComponent } from './components/settings/settings.component';
-
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
 type Section = 'today' | 'timeline' | 'calendar' | 'search';
@@ -37,8 +34,9 @@ export class AppComponent implements OnInit {
 
   @ViewChild(OutgoingTodosComponent) todosRef?: OutgoingTodosComponent;
 
-  readonly currentDate = signal(todayStr());
-  readonly todayStr = todayStr;
+  readonly currentDate = signal(todayString());
+  /** Exposed to the template so it can call todayString() to navigate back to today. */
+  readonly todayString = todayString;
   readonly currentContent = signal('');
   readonly allNoteDates = signal<Set<string>>(new Set());
   readonly allTodoDates = signal<Set<string>>(new Set());
@@ -82,6 +80,7 @@ export class AppComponent implements OnInit {
         switchMap(({ date, content }) =>
           from(this.storage.writeNote(date, content)),
         ),
+        takeUntilDestroyed(),
       )
       .subscribe(() => {
         this.saveStatus.set('saved');
@@ -107,10 +106,10 @@ export class AppComponent implements OnInit {
   }
 
   navigateDay(delta: number): void {
-    const [y, m, d] = this.currentDate().split('-').map(Number);
-    const date = new Date(y, m - 1, d);
+    const [year, month, day] = this.currentDate().split('-').map(Number);
+    const date = new Date(year, month - 1, day);
     date.setDate(date.getDate() + delta);
-    this.currentDate.set(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`);
+    this.currentDate.set(formatDateString(date));
   }
 
   onContentChange(content: string): void {

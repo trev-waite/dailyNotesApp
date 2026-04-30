@@ -75,9 +75,9 @@
           ></div>
         </div>
       }
-      @if (currentDate() !== todayStr()) {
+      @if (currentDate() !== todayString()) {
         <button
-          (click)="currentDate.set(todayStr())"
+          (click)="currentDate.set(todayString())"
           class="absolute right-12 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-sm select-none"
         >Today</button>
       }
