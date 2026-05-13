@@ -66,18 +66,22 @@
       >
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
       </button>
-      <p class="text-sm font-medium text-stone-500 dark:text-stone-400">{{ formattedDate() }}</p>
-      @if ((todosRef?.totalCount() ?? 0) > 0) {
-        <div class="w-20 h-1 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden mx-auto mt-2.5">
-          <div
-            class="h-full rounded-full bg-stone-500 dark:bg-stone-400 transition-all duration-300"
-            [style.width.%]="((todosRef?.checkedCount() ?? 0) / (todosRef?.totalCount() ?? 1)) * 100"
-          ></div>
-        </div>
-      }
-      @if (currentDate() !== todayStr()) {
+      <p class="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-stone-500 dark:text-stone-400">
+        {{ formattedDate() }}
+        @if (currentDate() === todayString()) {
+          <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 dark:bg-green-500"></span>
+        }
+      </p>
+      <div class="w-20 h-1 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden mx-auto mt-2.5"
+           [style.visibility]="(todosRef?.totalCount() ?? 0) > 0 ? 'visible' : 'hidden'">
+        <div
+          class="h-full rounded-full bg-stone-500 dark:bg-stone-400 transition-all duration-300"
+          [style.width.%]="((todosRef?.checkedCount() ?? 0) / (todosRef?.totalCount() ?? 1)) * 100"
+        ></div>
+      </div>
+      @if (currentDate() !== todayString()) {
         <button
-          (click)="currentDate.set(todayStr())"
+          (click)="currentDate.set(todayString())"
           class="absolute right-12 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-sm select-none"
         >Today</button>
       }

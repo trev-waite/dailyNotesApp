@@ -81,28 +81,26 @@
   }
 
   .resize-handle-thin {
-    height: 9px;
+    height: 4px;
     cursor: row-resize;
-    background-color: transparent;
-    position: relative;
-    flex-shrink: 0;
-  }
-  .resize-handle-thin::after {
-    content: '';
-    position: absolute;
-    inset: 4px 0;
-    height: 1px;
     background-color: rgb(231 229 228); /* stone-200 */
+    flex-shrink: 0;
     transition: background-color 0.15s;
   }
-  .resize-handle-thin:hover::after {
+  .resize-handle-thin:hover {
     background-color: rgb(168 162 158); /* stone-400 */
   }
-  :is(.dark) .resize-handle-thin::after {
+  :is(.dark) .resize-handle-thin {
     background-color: rgb(68 64 60); /* stone-700 */
   }
-  :is(.dark) .resize-handle-thin:hover::after {
+  :is(.dark) .resize-handle-thin:hover {
     background-color: rgb(120 113 108); /* stone-500 */
+  }
+
+  /* Suppress text selection globally while the resize drag is active */
+  .is-resizing * {
+    -webkit-user-select: none !important;
+    user-select: none !important;
   }
 
   /* Transparent day-navigation arrow buttons */

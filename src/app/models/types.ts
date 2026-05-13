@@ -10,12 +10,3 @@ export interface TodoItem {
   lineIndex: number;
   children?: TodoItem[];
 }
-
-export interface SlashCommand {
-  id: string;
-  label: string;
-  description: string;
-  snippet: string;
-  /** Zero-based index range within snippet to select after insertion, relative to snippet start */
-  selectRange?: [number, number];
-}
