@@ -36,8 +36,8 @@ export class OutgoingTodosComponent implements OnInit {
 
   readonly todos = computed<TodoItem[]>(() => {
     const today = this.currentDate();
-    const isVisible = (t: TodoItem) =>
-      t.date <= today && (!t.checked || t.date === today);
+    const isVisible = (t: TodoItem): boolean =>
+      t.date === today || (t.date < today && !t.checked);
 
     const result: TodoItem[] = [];
     this.todoContents().forEach((content, date) => {

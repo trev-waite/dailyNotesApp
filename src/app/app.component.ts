@@ -61,6 +61,7 @@ export class AppComponent implements OnInit {
   private readonly onMouseUp = () => {
     document.removeEventListener('mousemove', this.onMouseMove);
     document.removeEventListener('mouseup', this.onMouseUp);
+    document.documentElement.classList.remove('is-resizing');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   };
@@ -99,6 +100,7 @@ export class AppComponent implements OnInit {
   startResize(e: MouseEvent): void {
     this.dragStartY = e.clientY;
     this.dragStartHeight = this.todosPanelHeight();
+    document.documentElement.classList.add('is-resizing');
     document.body.style.cursor = 'row-resize';
     document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', this.onMouseMove);

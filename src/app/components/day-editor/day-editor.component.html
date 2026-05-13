@@ -4,54 +4,33 @@
   <div class="flex items-center gap-0.5 border-b border-stone-100 dark:border-stone-800 px-2 py-1.5 shrink-0 flex-wrap">
 
     <!-- Headings -->
-    <button (mousedown)="$event.preventDefault(); toggleHeading(1)" [class.bg-stone-100]="hasFormat('h1')" [class.dark:bg-stone-700]="hasFormat('h1')" title="Heading 1" class="toolbar-btn font-bold text-xs w-7 h-7">H1</button>
-    <button (mousedown)="$event.preventDefault(); toggleHeading(2)" [class.bg-stone-100]="hasFormat('h2')" [class.dark:bg-stone-700]="hasFormat('h2')" title="Heading 2" class="toolbar-btn font-bold text-xs w-7 h-7">H2</button>
-    <button (mousedown)="$event.preventDefault(); toggleHeading(3)" [class.bg-stone-100]="hasFormat('h3')" [class.dark:bg-stone-700]="hasFormat('h3')" title="Heading 3" class="toolbar-btn font-bold text-xs w-7 h-7">H3</button>
+    <button (mousedown)="$event.preventDefault(); toggleHeading(1)" [class.bg-stone-100]="hasFormat('h1')" [class.dark:bg-stone-700]="hasFormat('h1')" title="Heading 1 (⌘⌥ 1)" class="toolbar-btn font-bold text-xs w-7 h-7">H1</button>
+    <button (mousedown)="$event.preventDefault(); toggleHeading(2)" [class.bg-stone-100]="hasFormat('h2')" [class.dark:bg-stone-700]="hasFormat('h2')" title="Heading 2 (⌘⌥ 2)" class="toolbar-btn font-bold text-xs w-7 h-7">H2</button>
 
     <div class="toolbar-sep"></div>
 
     <!-- Inline formatting -->
-    <button (mousedown)="$event.preventDefault(); toggleBold()" [class.bg-stone-100]="hasFormat('bold')" [class.dark:bg-stone-700]="hasFormat('bold')" title="Bold" class="toolbar-btn">
+    <button (mousedown)="$event.preventDefault(); toggleBold()" [class.bg-stone-100]="hasFormat('bold')" [class.dark:bg-stone-700]="hasFormat('bold')" title="Bold (⌘B)" class="toolbar-btn">
       <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
     </button>
-    <button (mousedown)="$event.preventDefault(); toggleItalic()" [class.bg-stone-100]="hasFormat('italic')" [class.dark:bg-stone-700]="hasFormat('italic')" title="Italic" class="toolbar-btn italic font-serif text-sm">I</button>
-    <button (mousedown)="$event.preventDefault(); toggleStrikethrough()" [class.bg-stone-100]="hasFormat('strikethrough')" [class.dark:bg-stone-700]="hasFormat('strikethrough')" title="Strikethrough" class="toolbar-btn text-xs line-through">S</button>
+    <button (mousedown)="$event.preventDefault(); toggleItalic()" [class.bg-stone-100]="hasFormat('italic')" [class.dark:bg-stone-700]="hasFormat('italic')" title="Italic (⌘I)" class="toolbar-btn italic font-serif text-sm">I</button>
+    <button (mousedown)="$event.preventDefault(); toggleInlineCode()" [class.bg-stone-100]="hasFormat('code')" [class.dark:bg-stone-700]="hasFormat('code')" title="Code (⌘⇧C)" class="toolbar-btn font-mono text-xs">&lt;/&gt;</button>
 
     <div class="toolbar-sep"></div>
 
-    <!-- Lists -->
-    <button (mousedown)="$event.preventDefault(); toggleBulletList()" [class.bg-stone-100]="hasFormat('ul')" [class.dark:bg-stone-700]="hasFormat('ul')" title="Bullet list" class="toolbar-btn">
+    <!-- Bullet list -->
+    <button (mousedown)="$event.preventDefault(); toggleBulletList()" [class.bg-stone-100]="hasFormat('ul')" [class.dark:bg-stone-700]="hasFormat('ul')" title="Bullet list (⌘⇧L)" class="toolbar-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="w-4 h-4">
         <circle cx="4" cy="7" r="1.5" fill="currentColor" stroke="none"/><line x1="8" y1="7" x2="20" y2="7"/>
         <circle cx="4" cy="12" r="1.5" fill="currentColor" stroke="none"/><line x1="8" y1="12" x2="20" y2="12"/>
         <circle cx="4" cy="17" r="1.5" fill="currentColor" stroke="none"/><line x1="8" y1="17" x2="20" y2="17"/>
       </svg>
     </button>
-    <button (mousedown)="$event.preventDefault(); toggleOrderedList()" [class.bg-stone-100]="hasFormat('ol')" [class.dark:bg-stone-700]="hasFormat('ol')" title="Ordered list" class="toolbar-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="w-4 h-4">
-        <line x1="10" y1="7" x2="20" y2="7"/><line x1="10" y1="12" x2="20" y2="12"/><line x1="10" y1="17" x2="20" y2="17"/>
-        <text x="3" y="9" font-size="6" fill="currentColor" stroke="none">1</text>
-        <text x="3" y="14" font-size="6" fill="currentColor" stroke="none">2</text>
-        <text x="3" y="19" font-size="6" fill="currentColor" stroke="none">3</text>
-      </svg>
-    </button>
-    <div class="toolbar-sep"></div>
-
-    <!-- Block formatting -->
-    <button (mousedown)="$event.preventDefault(); toggleBlockquote()" [class.bg-stone-100]="hasFormat('blockquote')" [class.dark:bg-stone-700]="hasFormat('blockquote')" title="Blockquote" class="toolbar-btn">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M3 6h4v4H3zm0 6h4v4H3zm7-6h4v4h-4zm0 6h4v4h-4z" opacity=".4"/><rect x="3" y="6" width="1.5" height="12" rx="1"/><rect x="10" y="6" width="1.5" height="12" rx="1"/></svg>
-    </button>
-    <button (mousedown)="$event.preventDefault(); insertCodeBlock()" [class.bg-stone-100]="hasFormat('pre')" [class.dark:bg-stone-700]="hasFormat('pre')" title="Code block" class="toolbar-btn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-        <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
-      </svg>
-    </button>
-
     <div class="toolbar-sep"></div>
 
     <!-- Link -->
     <div class="relative">
-      <button (mousedown)="$event.preventDefault(); openLinkPopover()" [class.bg-stone-100]="showLinkPopover()" [class.dark:bg-stone-700]="showLinkPopover()" title="Insert link" class="toolbar-btn">
+      <button (mousedown)="$event.preventDefault(); openLinkPopover()" [class.bg-stone-100]="SHOW_LINK_POPOVER()" [class.dark:bg-stone-700]="SHOW_LINK_POPOVER()" title="Link (⌘K)" class="toolbar-btn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
           <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
@@ -59,15 +38,15 @@
       </button>
 
       <!-- Link popover -->
-      @if (showLinkPopover()) {
+      @if (SHOW_LINK_POPOVER()) {
         <div class="link-popover absolute left-0 top-full mt-2 z-40 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl shadow-xl p-3 w-72" (mousedown)="$event.stopPropagation()">
           <div class="flex flex-col gap-2">
             <input
               #linkUrlInput
               type="url"
               placeholder="https://..."
-              [value]="linkUrl()"
-              (input)="linkUrl.set($any($event.target).value)"
+              [value]="LINK_URL()"
+              (input)="LINK_URL.set($any($event.target).value)"
               (keydown.enter)="insertLink()"
               (keydown.escape)="closeLinkPopover()"
               class="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600"
@@ -75,8 +54,8 @@
             <input
               type="text"
               placeholder="Link text (optional)"
-              [value]="linkText()"
-              (input)="linkText.set($any($event.target).value)"
+              [value]="LINK_TEXT()"
+              (input)="LINK_TEXT.set($any($event.target).value)"
               (keydown.enter)="insertLink()"
               (keydown.escape)="closeLinkPopover()"
               class="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 dark:border-stone-600 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-stone-600"
@@ -104,64 +83,25 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-3.5 h-3.5">
         <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
       </svg>
-      {{ copyLabel() === 'copied' ? 'Copied!' : 'Copy MD' }}
+      {{ COPY_LABEL() === 'copied' ? 'Copied!' : 'Copy MD' }}
     </button>
   </div>
 
   <!-- Editor area -->
-  @for (k of [animKey()]; track k) {
+  @for (k of [ANIM_KEY()]; track k) {
     <div class="animate-slide-in relative flex-1 flex flex-col overflow-hidden">
-
-      <!-- Make Todo button (shown when text is selected) -->
-      @if (showMakeTodo()) {
-        <div class="absolute top-2 right-3 z-20">
-          <button
-            (mousedown)="$event.preventDefault(); makeTodo()"
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-medium rounded-full shadow-md hover:opacity-90 transition-opacity"
-          >
-            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            Make Todo
-          </button>
-        </div>
-      }
-
-      <!-- Slash command popup -->
-      @if (slashActive() && slashCommands().length > 0) {
-        <div
-          class="absolute z-30 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl shadow-lg w-64 overflow-hidden"
-          [style.top.px]="slashPopupPos()?.top ?? 40"
-          [style.left.px]="slashPopupPos()?.left ?? 16"
-        >
-          @for (cmd of slashCommands(); track cmd.id; let i = $index) {
-            <button
-              (mousedown)="$event.preventDefault(); selectSlashCommand(cmd)"
-              class="w-full flex flex-col px-4 py-2.5 text-left transition-colors"
-              [class.bg-stone-100]="slashIndex() === i"
-              [class.dark:bg-stone-700]="slashIndex() === i"
-              [class.hover:bg-stone-50]="slashIndex() !== i"
-              [class.dark:hover:bg-stone-750]="slashIndex() !== i"
-            >
-              <span class="text-sm font-medium text-stone-800 dark:text-stone-100">{{ cmd.label }}</span>
-              <span class="text-xs text-stone-500 dark:text-stone-400">{{ cmd.description }}</span>
-            </button>
-          }
-        </div>
-      }
 
       <!-- Contenteditable WYSIWYG editor -->
       <div
         #liveEditor
         contenteditable="true"
         spellcheck="true"
-        [innerHTML]="renderedHtml()"
+        [innerHTML]="RENDERED_HTML()"
         (input)="onLiveInput($event)"
         (keydown)="onLiveKeydown($event)"
-        (mouseup)="onLiveMouseup()"
         (blur)="onLiveBlur()"
-        data-placeholder="Type here, or use / for commands…"
-        class="live-editor flex-1 overflow-y-auto px-14 py-4 prose prose-stone dark:prose-invert max-w-none prose-sm focus:outline-none"
+        data-placeholder="Start writing…"
+        class="live-editor flex-1 overflow-y-auto px-4 py-4 prose prose-stone dark:prose-invert max-w-none prose-sm focus:outline-none" style="contain:layout"
       ></div>
     </div>
   }
