@@ -62,6 +62,18 @@ export class AppComponent implements OnInit {
     localStorage.getItem(CALENDAR_ALWAYS_VISIBLE_KEY) === 'true',
   );
   readonly todosPanelHeight = signal(220);
+  readonly sidebarWidth = signal(208);
+  readonly sidebarIconOnly = computed(() => this.sidebarWidth() < 100);
+  private sidebarPrevWidth = 208;
+
+  toggleSidebar(): void {
+    if (this.sidebarIconOnly()) {
+      this.sidebarWidth.set(this.sidebarPrevWidth);
+    } else {
+      this.sidebarPrevWidth = this.sidebarWidth();
+      this.sidebarWidth.set(48);
+    }
+  }
 
   readonly formattedDate = computed(() => {
     const [y, m, d] = this.currentDate().split('-').map(Number);
@@ -92,6 +104,32 @@ export class AppComponent implements OnInit {
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   };
+
+  private sidebarDragStartX = 0;
+  private sidebarDragStartWidth = 0;
+  private readonly onSidebarMouseMove = (e: MouseEvent) => {
+    const delta = e.clientX - this.sidebarDragStartX;
+    const newWidth = Math.min(208, Math.max(48, this.sidebarDragStartWidth + delta));
+    this.sidebarWidth.set(newWidth);
+  };
+  private readonly onSidebarMouseUp = () => {
+    document.removeEventListener('mousemove', this.onSidebarMouseMove);
+    document.removeEventListener('mouseup', this.onSidebarMouseUp);
+    document.documentElement.classList.remove('is-resizing');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  };
+
+  startSidebarResize(e: MouseEvent): void {
+    this.sidebarDragStartX = e.clientX;
+    this.sidebarDragStartWidth = this.sidebarWidth();
+    this.sidebarPrevWidth = this.sidebarWidth();
+    document.documentElement.classList.add('is-resizing');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', this.onSidebarMouseMove);
+    document.addEventListener('mouseup', this.onSidebarMouseUp);
+  }
 
   private readonly saveSubject = new Subject<{ date: string; content: string }>();
 
