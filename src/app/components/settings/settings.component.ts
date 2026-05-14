@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, output } from '@angular/core';
+import { Component, HostListener, Input, inject, output } from '@angular/core';
 import { NoteStorageService } from '../../services/note-storage.service';
 import { ThemeService } from '../../services/theme.service';
 
@@ -11,10 +11,17 @@ export class SettingsComponent {
   readonly storage = inject(NoteStorageService);
   readonly theme = inject(ThemeService);
 
+  @Input() calendarAlwaysVisible = false;
+
   readonly closed = output<void>();
+  readonly calendarAlwaysVisibleChange = output<boolean>();
 
   async changeFolder(): Promise<void> {
     await this.storage.pickFolder();
+  }
+
+  toggleCalendarAlwaysVisible(): void {
+    this.calendarAlwaysVisibleChange.emit(!this.calendarAlwaysVisible);
   }
 
   close(): void {

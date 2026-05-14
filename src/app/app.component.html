@@ -6,25 +6,27 @@
       <span class="text-base font-bold text-stone-900 dark:text-stone-100 tracking-tight">Daylog</span>
     </div>
 
-    <nav class="flex-1 px-2 py-3 flex flex-col gap-0.5">
-      <button (click)="activeSection.set('today')" class="sidebar-nav-item" [class.active]="activeSection() === 'today'">
+    <nav class="flex-1 px-2 py-3 flex flex-col gap-0.5 overflow-y-auto">
+      <button (click)="goToToday()" class="sidebar-nav-item" [class.active]="activeView() === 'editor'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
         Today
       </button>
-      <button (click)="activeSection.set('timeline')" class="sidebar-nav-item" [class.active]="activeSection() === 'timeline'">
+      <button (click)="activeView.set('timeline')" class="sidebar-nav-item" [class.active]="activeView() === 'timeline'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/></svg>
         Timeline
       </button>
-      <button (click)="activeSection.set('calendar')" class="sidebar-nav-item" [class.active]="activeSection() === 'calendar'">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
-        Calendar
-      </button>
-      <button (click)="activeSection.set('search')" class="sidebar-nav-item" [class.active]="activeSection() === 'search'">
+      @if (!calendarAlwaysVisible()) {
+        <button (click)="activeView.set('calendar')" class="sidebar-nav-item" [class.active]="activeView() === 'calendar'">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/></svg>
+          Calendar
+        </button>
+      }
+      <button (click)="activeView.set('search')" class="sidebar-nav-item" [class.active]="activeView() === 'search'">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 15.803a7.5 7.5 0 0 0 10.607 0z"/></svg>
         Search
       </button>
 
-      @if (activeSection() === 'calendar') {
+      @if (calendarAlwaysVisible()) {
         <div class="mt-1.5 pt-2 border-t border-stone-200 dark:border-stone-800 px-1">
           <app-calendar-nav
             [selectedDate]="currentDate()"
@@ -47,75 +49,216 @@
   <!-- Main content -->
   <main class="flex flex-col flex-1 overflow-hidden">
 
-    <!-- Date header -->
-    <div
-      class="relative px-6 py-3 shrink-0 text-center group select-none"
-      data-tauri-drag-region
-    >
-      <button
-        (click)="navigateDay(-1)"
-        aria-label="Previous day"
-        class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-150 select-none"
-      >
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
-      </button>
-      <button
-        (click)="navigateDay(1)"
-        aria-label="Next day"
-        class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-150 select-none"
-      >
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
-      </button>
-      <p class="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-stone-500 dark:text-stone-400">
-        {{ formattedDate() }}
-        @if (currentDate() === todayString()) {
-          <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 dark:bg-green-500"></span>
+    @switch (activeView()) {
+
+      @case ('editor') {
+
+        <!-- Back to calendar link -->
+        @if (previousView() === 'calendar') {
+          <div class="px-6 pt-3 shrink-0" data-tauri-drag-region>
+            <button
+              (click)="activeView.set('calendar'); previousView.set(null)"
+              class="inline-flex items-center gap-1 text-xs text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+            >
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+              Back to Calendar
+            </button>
+          </div>
         }
-      </p>
-      <div class="w-20 h-1 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden mx-auto mt-2.5"
-           [style.visibility]="(todosRef?.totalCount() ?? 0) > 0 ? 'visible' : 'hidden'">
+
+        <!-- Date header -->
         <div
-          class="h-full rounded-full bg-stone-500 dark:bg-stone-400 transition-all duration-300"
-          [style.width.%]="((todosRef?.checkedCount() ?? 0) / (todosRef?.totalCount() ?? 1)) * 100"
-        ></div>
-      </div>
-      @if (currentDate() !== todayString()) {
-        <button
-          (click)="currentDate.set(todayString())"
-          class="absolute right-12 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-sm select-none"
-        >Today</button>
+          class="relative px-6 py-3 shrink-0 text-center group select-none"
+          data-tauri-drag-region
+        >
+          <button
+            (click)="navigateDay(-1)"
+            aria-label="Previous day"
+            class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-150 select-none"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
+          </button>
+          <button
+            (click)="navigateDay(1)"
+            aria-label="Next day"
+            class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 rounded-full text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors duration-150 select-none"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
+          </button>
+          <p class="inline-flex items-center justify-center gap-1.5 text-sm font-medium text-stone-500 dark:text-stone-400">
+            {{ formattedDate() }}
+            @if (currentDate() === todayString()) {
+              <span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 dark:bg-green-500"></span>
+            }
+          </p>
+          <div class="w-20 h-1 rounded-full bg-stone-200 dark:bg-stone-700 overflow-hidden mx-auto mt-2.5"
+               [style.visibility]="(todosRef?.totalCount() ?? 0) > 0 ? 'visible' : 'hidden'">
+            <div
+              class="h-full rounded-full bg-stone-500 dark:bg-stone-400 transition-all duration-300"
+              [style.width.%]="((todosRef?.checkedCount() ?? 0) / (todosRef?.totalCount() ?? 1)) * 100"
+            ></div>
+          </div>
+          @if (currentDate() !== todayString()) {
+            <button
+              (click)="goToToday()"
+              class="absolute right-12 top-1/2 -translate-y-1/2 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-150 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900 shadow-sm select-none"
+            >Today</button>
+          }
+        </div>
+
+        <!-- Todos panel (resizable) -->
+        <div class="overflow-y-auto shrink-0" [style.height.px]="todosPanelHeight()">
+          <app-outgoing-todos
+            [currentDate]="currentDate()"
+            (todoAdded)="onTodoAdded()"
+          ></app-outgoing-todos>
+        </div>
+
+        <!-- Drag handle -->
+        <div class="resize-handle-thin shrink-0" (mousedown)="startResize($event)"></div>
+
+        <!-- Day editor -->
+        <div class="relative flex-1 overflow-hidden flex flex-col">
+          <app-day-editor
+            class="flex flex-col flex-1"
+            [date]="currentDate()"
+            [content]="currentContent()"
+            [saveStatus]="saveStatus()"
+            (contentChange)="onContentChange($event)"
+          ></app-day-editor>
+        </div>
+
       }
-    </div>
 
-    <!-- Todos panel (resizable) -->
-    <div class="overflow-y-auto shrink-0" [style.height.px]="todosPanelHeight()">
-      <app-outgoing-todos
-        [currentDate]="currentDate()"
-        (todoAdded)="onTodoAdded()"
-      ></app-outgoing-todos>
-    </div>
+      @case ('calendar') {
 
-    <!-- Drag handle -->
-    <div
-      class="resize-handle-thin shrink-0"
-      (mousedown)="startResize($event)"
-    ></div>
+        <div class="flex h-full overflow-hidden" data-tauri-drag-region>
 
-    <!-- Day editor (fills remaining space) -->
-    <div class="relative flex-1 overflow-hidden flex flex-col">
-      <app-day-editor
-        class="flex flex-col flex-1"
-        [date]="currentDate()"
-        [content]="currentContent()"
-        [saveStatus]="saveStatus()"
-        (contentChange)="onContentChange($event)"
-      ></app-day-editor>
-    </div>
+          <!-- Calendar area -->
+          <div class="flex flex-col flex-1 overflow-hidden min-w-0">
+            <!-- Header -->
+            <div class="px-6 pt-6 pb-4 border-b border-stone-200 dark:border-stone-800 shrink-0" data-tauri-drag-region>
+              <h2 class="text-xs font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider">Calendar</h2>
+            </div>
+
+            <!-- Full-size calendar grid -->
+            <div class="flex-1 p-8 overflow-y-auto">
+              <app-calendar-nav
+                [selectedDate]="previewDate() ?? currentDate()"
+                [noteDates]="allNoteDates()"
+                [todoDates]="allTodoDates()"
+                [compact]="false"
+                (dateSelected)="onCalendarPreviewDate($event)"
+              />
+            </div>
+          </div>
+
+          <!-- Preview panel -->
+          @if (previewDate()) {
+            <div class="w-72 shrink-0 border-l border-stone-200 dark:border-stone-800 flex flex-col overflow-hidden">
+
+              <!-- Preview header -->
+              <div class="px-5 pt-5 pb-4 border-b border-stone-200 dark:border-stone-800 shrink-0">
+                <div class="flex items-center justify-between mb-2">
+                  <p class="text-[10px] font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider">Preview</p>
+                  <button
+                    (click)="closePreview()"
+                    aria-label="Close preview"
+                    class="flex items-center justify-center w-5 h-5 rounded text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                  >
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+                  </button>
+                </div>
+                <p class="text-sm font-semibold text-stone-800 dark:text-stone-100 leading-snug">{{ formattedPreviewDate() }}</p>
+              </div>
+
+              <!-- Content -->
+              <div class="flex-1 overflow-y-auto">
+                @if (previewLoading()) {
+                  <div class="px-5 py-4 space-y-2">
+                    <div class="h-3 bg-stone-100 dark:bg-stone-800 rounded animate-pulse w-full"></div>
+                    <div class="h-3 bg-stone-100 dark:bg-stone-800 rounded animate-pulse w-3/4"></div>
+                    <div class="h-3 bg-stone-100 dark:bg-stone-800 rounded animate-pulse w-5/6"></div>
+                  </div>
+                } @else {
+
+                  <!-- Todos section -->
+                  @if (previewTodoItems().length > 0) {
+                    <div class="px-5 pt-4 pb-3">
+                      <p class="text-[10px] font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2">Todos</p>
+                      <ul class="space-y-1.5">
+                        @for (todo of previewTodoItems(); track $index) {
+                          <li class="flex items-start gap-2">
+                            <span class="mt-0.5 shrink-0 flex items-center justify-center w-3.5 h-3.5 rounded border border-stone-300 dark:border-stone-600"
+                              [class.bg-stone-800]="todo.checked" [class.dark:bg-stone-200]="todo.checked" [class.border-stone-800]="todo.checked" [class.dark:border-stone-200]="todo.checked">
+                              @if (todo.checked) {
+                                <svg class="w-2 h-2 text-white dark:text-stone-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                              }
+                            </span>
+                            <span class="text-xs leading-snug" [class.line-through]="todo.checked" [class.text-stone-400]="todo.checked" [class.dark:text-stone-600]="todo.checked" [class.text-stone-700]="!todo.checked" [class.dark:text-stone-300]="!todo.checked">{{ todo.text }}</span>
+                          </li>
+                        }
+                      </ul>
+                    </div>
+                    <div class="mx-5 border-t border-stone-200 dark:border-stone-800"></div>
+                  }
+
+                  <!-- Note snippet -->
+                  <div class="px-5 py-4">
+                    @if (previewContent()) {
+                      <p class="text-[10px] font-semibold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2">Note</p>
+                      <p class="text-xs text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-wrap">{{ previewContent() }}</p>
+                    } @else if (previewTodoItems().length === 0) {
+                      <p class="text-xs text-stone-400 dark:text-stone-600 italic">Nothing for this day.</p>
+                    }
+                  </div>
+
+                }
+              </div>
+
+              <!-- Open button -->
+              <div class="px-5 pb-5 pt-3 shrink-0 border-t border-stone-200 dark:border-stone-800">
+                <button
+                  (click)="openPreviewInEditor()"
+                  class="w-full flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-xs font-medium bg-stone-800 hover:bg-stone-700 dark:bg-stone-200 dark:hover:bg-stone-300 text-white dark:text-stone-900 transition-colors"
+                >
+                  Open day
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                </button>
+                <p class="text-center text-[10px] text-stone-400 dark:text-stone-600 mt-2">or click the date again</p>
+              </div>
+
+            </div>
+          }
+
+        </div>
+
+      }
+
+      @case ('timeline') {
+        <app-history-timeline
+          class="flex flex-col flex-1 overflow-hidden"
+          (dateSelected)="onViewDateSelected($event)"
+        />
+      }
+
+      @case ('search') {
+        <app-search-panel
+          class="flex flex-col flex-1 overflow-hidden"
+          (dateSelected)="onViewDateSelected($event)"
+        />
+      }
+
+    }
 
   </main>
 
 </div>
 
 @if (showSettings()) {
-  <app-settings (closed)="showSettings.set(false)"></app-settings>
+  <app-settings
+    [calendarAlwaysVisible]="calendarAlwaysVisible()"
+    (calendarAlwaysVisibleChange)="onCalendarAlwaysVisibleChange($event)"
+    (closed)="showSettings.set(false)"
+  ></app-settings>
 }

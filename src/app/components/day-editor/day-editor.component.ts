@@ -285,7 +285,7 @@ export class DayEditorComponent implements AfterViewInit, OnChanges {
   onDocumentMousedown(event: MouseEvent): void {
     if (this.SHOW_LINK_POPOVER()) {
       const target = event.target as HTMLElement;
-      if (!target.closest('.link-popover')) this.closeLinkPopover();
+      if (!target.closest('.link-popover-container')) this.closeLinkPopover();
     }
   }
 

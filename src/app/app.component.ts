@@ -17,14 +17,25 @@ import { CalendarNavComponent } from './components/calendar-nav/calendar-nav.com
 import { DayEditorComponent } from './components/day-editor/day-editor.component';
 import { OutgoingTodosComponent } from './components/outgoing-todos/outgoing-todos.component';
 import { SettingsComponent } from './components/settings/settings.component';
+import { HistoryTimelineComponent } from './components/history-timeline/history-timeline.component';
+import { SearchPanelComponent } from './components/search-panel/search-panel.component';
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
-type Section = 'today' | 'timeline' | 'calendar' | 'search';
+type ActiveView = 'editor' | 'calendar' | 'timeline' | 'search';
+
+const CALENDAR_ALWAYS_VISIBLE_KEY = 'calendarAlwaysVisible';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CalendarNavComponent, DayEditorComponent, OutgoingTodosComponent, SettingsComponent],
+  imports: [
+    CalendarNavComponent,
+    DayEditorComponent,
+    OutgoingTodosComponent,
+    SettingsComponent,
+    HistoryTimelineComponent,
+    SearchPanelComponent,
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
 })
@@ -35,18 +46,34 @@ export class AppComponent implements OnInit {
   @ViewChild(OutgoingTodosComponent) todosRef?: OutgoingTodosComponent;
 
   readonly currentDate = signal(todayString());
-  /** Exposed to the template so it can call todayString() to navigate back to today. */
   readonly todayString = todayString;
   readonly currentContent = signal('');
   readonly allNoteDates = signal<Set<string>>(new Set());
   readonly allTodoDates = signal<Set<string>>(new Set());
   readonly saveStatus = signal<SaveStatus>('idle');
   readonly showSettings = signal(false);
-  readonly activeSection = signal<Section>('today');
+  readonly activeView = signal<ActiveView>('editor');
+  readonly previousView = signal<'calendar' | null>(null);
+  readonly previewDate = signal<string | null>(null);
+  readonly previewContent = signal<string>('');
+  readonly previewTodoItems = signal<{ text: string; checked: boolean }[]>([]);
+  readonly previewLoading = signal<boolean>(false);
+  readonly calendarAlwaysVisible = signal<boolean>(
+    localStorage.getItem(CALENDAR_ALWAYS_VISIBLE_KEY) === 'true',
+  );
   readonly todosPanelHeight = signal(220);
 
   readonly formattedDate = computed(() => {
     const [y, m, d] = this.currentDate().split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-US', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    });
+  });
+
+  readonly formattedPreviewDate = computed(() => {
+    const date = this.previewDate();
+    if (!date) return '';
+    const [y, m, d] = date.split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
@@ -95,6 +122,78 @@ export class AppComponent implements OnInit {
       await this.storage.pickFolder();
     }
     await this.refreshNotesList();
+  }
+
+  goToToday(): void {
+    this.currentDate.set(todayString());
+    this.activeView.set('editor');
+    this.previousView.set(null);
+  }
+
+  onCalendarDateSelected(date: string): void {
+    this.currentDate.set(date);
+    this.previousView.set('calendar');
+    this.activeView.set('editor');
+  }
+
+  onCalendarPreviewDate(date: string): void {
+    if (this.previewDate() === date) {
+      this.currentDate.set(date);
+      this.previousView.set('calendar');
+      this.activeView.set('editor');
+      return;
+    }
+    this.previewDate.set(date);
+    this.previewContent.set('');
+    this.previewTodoItems.set([]);
+    this.previewLoading.set(true);
+    void Promise.all([
+      this.storage.readNote(date),
+      this.storage.readTodos(date),
+    ]).then(([content, todosRaw]) => {
+      if (this.previewDate() !== date) return;
+      this.previewContent.set(content);
+      this.previewTodoItems.set(this.parseTodos(todosRaw));
+      this.previewLoading.set(false);
+    });
+  }
+
+  closePreview(): void {
+    this.previewDate.set(null);
+    this.previewContent.set('');
+    this.previewTodoItems.set([]);
+  }
+
+  private parseTodos(raw: string): { text: string; checked: boolean }[] {
+    return raw
+      .split('\n')
+      .filter(line => /^- \[.\]/.test(line))
+      .map(line => ({
+        checked: line.startsWith('- [x]') || line.startsWith('- [X]'),
+        text: line.replace(/^- \[.\]\s*/, ''),
+      }));
+  }
+
+  openPreviewInEditor(): void {
+    const date = this.previewDate();
+    if (!date) return;
+    this.currentDate.set(date);
+    this.previousView.set('calendar');
+    this.activeView.set('editor');
+  }
+
+  onViewDateSelected(date: string): void {
+    this.currentDate.set(date);
+    this.previousView.set(null);
+    this.activeView.set('editor');
+  }
+
+  onCalendarAlwaysVisibleChange(value: boolean): void {
+    this.calendarAlwaysVisible.set(value);
+    localStorage.setItem(CALENDAR_ALWAYS_VISIBLE_KEY, String(value));
+    if (value && this.activeView() === 'calendar') {
+      this.activeView.set('editor');
+    }
   }
 
   startResize(e: MouseEvent): void {

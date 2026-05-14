@@ -68,6 +68,7 @@ export class CalendarNavComponent {
   readonly selectedDate = input.required<string>();
   readonly noteDates = input<Set<string>>(new Set());
   readonly todoDates = input<Set<string>>(new Set());
+  readonly compact = input<boolean>(true);
   readonly dateSelected = output<string>();
 
   readonly today = todayString();
@@ -75,6 +76,30 @@ export class CalendarNavComponent {
   readonly MONTH_NAMES = MONTH_NAMES;
 
   readonly viewMonth = signal(currentYearMonth());
+
+  readonly outerClass = computed(() =>
+    this.compact()
+      ? 'flex flex-col gap-2 select-none py-1'
+      : 'flex flex-col gap-4 select-none h-full',
+  );
+  readonly monthLabelClass = computed(() =>
+    this.compact()
+      ? 'text-xs font-semibold text-stone-700 dark:text-stone-300'
+      : 'text-sm font-semibold text-stone-700 dark:text-stone-300',
+  );
+  readonly todayLinkClass = computed(() =>
+    this.compact()
+      ? 'text-[10px] font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 transition-colors'
+      : 'text-xs font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 transition-colors',
+  );
+  readonly labelClass = computed(() =>
+    this.compact()
+      ? 'text-[9px] font-medium text-stone-400 dark:text-stone-600 py-0.5'
+      : 'text-xs font-medium text-stone-400 dark:text-stone-600 py-1',
+  );
+  readonly cellTextClass = computed(() =>
+    this.compact() ? 'text-[11px] leading-none' : 'text-sm leading-none',
+  );
 
   private initialized = false;
 

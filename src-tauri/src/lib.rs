@@ -1,4 +1,37 @@
+use rayon::prelude::*;
 use std::path::PathBuf;
+
+#[derive(serde::Serialize)]
+struct NotePreview {
+    date: String,
+    preview: String,
+    has_todos: bool,
+}
+
+#[derive(serde::Serialize)]
+struct SearchResult {
+    date: String,
+    kind: String,
+    snippet: String,
+}
+
+/// Extracts a ~`max_len`-char snippet from `content` centred on `byte_pos`.
+fn extract_snippet(content: &str, byte_pos: usize, max_len: usize) -> String {
+    let half = max_len / 2;
+    let raw_start = byte_pos.saturating_sub(half);
+    let start = (0..=raw_start)
+        .rev()
+        .find(|&i| content.is_char_boundary(i))
+        .unwrap_or(0);
+    let raw_end = (start + max_len).min(content.len());
+    let end = (raw_end..=content.len())
+        .find(|&i| content.is_char_boundary(i))
+        .unwrap_or(content.len());
+    let snippet = &content[start..end];
+    let prefix = if start > 0 { "…" } else { "" };
+    let suffix = if end < content.len() { "…" } else { "" };
+    format!("{}{}{}", prefix, snippet.trim(), suffix)
+}
 
 /// Validates that `date` is exactly in YYYY-MM-DD format (digits only, correct separators).
 fn validate_date(date: &str) -> bool {
@@ -145,6 +178,95 @@ fn list_files_by_suffix(notes_dir: &str, suffix: &str) -> Result<Vec<String>, St
     Ok(dates)
 }
 
+#[tauri::command]
+async fn list_notes_with_previews(
+    notes_dir: String,
+    preview_len: usize,
+) -> Result<Vec<NotePreview>, String> {
+    let capped_len = preview_len.min(500);
+    let base = PathBuf::from(&notes_dir);
+    if !base.exists() {
+        return Ok(vec![]);
+    }
+    let canonical_base = base.canonicalize().map_err(|e| e.to_string())?;
+    let dates = list_files_by_suffix(&notes_dir, ".md")?;
+
+    let mut previews: Vec<NotePreview> = dates
+        .par_iter()
+        .filter_map(|date| {
+            let note_path = base.join(format!("{date}.md"));
+            let todos_path = base.join(format!("{date}.todos.md"));
+            let canonical = note_path.parent()?.canonicalize().ok()?;
+            if !canonical.starts_with(&canonical_base) {
+                return None;
+            }
+            let content = std::fs::read_to_string(&note_path).unwrap_or_default();
+            let preview: String = content.chars().take(capped_len).collect();
+            let has_todos = todos_path.exists();
+            Some(NotePreview { date: date.clone(), preview, has_todos })
+        })
+        .collect();
+
+    previews.sort_by(|a, b| b.date.cmp(&a.date));
+    Ok(previews)
+}
+
+#[tauri::command]
+async fn search_notes(notes_dir: String, query: String) -> Result<Vec<SearchResult>, String> {
+    if query.is_empty() {
+        return Ok(vec![]);
+    }
+    if query.len() > 500 {
+        return Err("Query too long".into());
+    }
+    let base = PathBuf::from(&notes_dir);
+    if !base.exists() {
+        return Ok(vec![]);
+    }
+    let canonical_base = base.canonicalize().map_err(|e| e.to_string())?;
+    let query_lower = query.to_lowercase();
+
+    let note_dates = list_files_by_suffix(&notes_dir, ".md")?;
+    let todo_dates = list_files_by_suffix(&notes_dir, ".todos.md")?;
+
+    let note_results: Vec<SearchResult> = note_dates
+        .par_iter()
+        .filter_map(|date| {
+            let path = base.join(format!("{date}.md"));
+            let canonical = path.parent()?.canonicalize().ok()?;
+            if !canonical.starts_with(&canonical_base) {
+                return None;
+            }
+            let content = std::fs::read_to_string(&path).ok()?;
+            let content_lower = content.to_lowercase();
+            let byte_pos = content_lower.find(&query_lower)?;
+            let snippet = extract_snippet(&content, byte_pos, 150);
+            Some(SearchResult { date: date.clone(), kind: "note".into(), snippet })
+        })
+        .collect();
+
+    let todo_results: Vec<SearchResult> = todo_dates
+        .par_iter()
+        .filter_map(|date| {
+            let path = base.join(format!("{date}.todos.md"));
+            let canonical = path.parent()?.canonicalize().ok()?;
+            if !canonical.starts_with(&canonical_base) {
+                return None;
+            }
+            let content = std::fs::read_to_string(&path).ok()?;
+            let content_lower = content.to_lowercase();
+            let byte_pos = content_lower.find(&query_lower)?;
+            let snippet = extract_snippet(&content, byte_pos, 150);
+            Some(SearchResult { date: date.clone(), kind: "todo".into(), snippet })
+        })
+        .collect();
+
+    let mut results = note_results;
+    results.extend(todo_results);
+    results.sort_by(|a, b| b.date.cmp(&a.date));
+    Ok(results)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -159,6 +281,8 @@ pub fn run() {
             read_todos,
             write_todos,
             list_todo_files,
+            list_notes_with_previews,
+            search_notes,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

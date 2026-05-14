@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { invoke } from '@tauri-apps/api/core';
+import { NotePreview, SearchResult } from '../models/types';
 
 const NOTES_DIR_KEY = 'notesDir';
 
@@ -52,5 +53,17 @@ export class NoteStorageService {
     const dir = this.notesDir();
     if (!dir) return [];
     return invoke<string[]>('list_todo_files', { notesDir: dir });
+  }
+
+  async listNotesWithPreviews(previewLen = 200): Promise<NotePreview[]> {
+    const dir = this.notesDir();
+    if (!dir) return [];
+    return invoke<NotePreview[]>('list_notes_with_previews', { notesDir: dir, previewLen });
+  }
+
+  async searchNotes(query: string): Promise<SearchResult[]> {
+    const dir = this.notesDir();
+    if (!dir) return [];
+    return invoke<SearchResult[]>('search_notes', { notesDir: dir, query });
   }
 }
