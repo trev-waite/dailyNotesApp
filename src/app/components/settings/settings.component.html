@@ -66,6 +66,29 @@
         </button>
       </div>
 
+      <!-- Calendar always visible -->
+      <div class="flex items-center justify-between px-5 py-4">
+        <div>
+          <p class="text-sm font-medium text-stone-800 dark:text-stone-100">Always show Calendar</p>
+          <p class="text-xs text-stone-400 dark:text-stone-500 mt-0.5">
+            {{ calendarAlwaysVisible ? 'Pinned to sidebar' : 'Available from sidebar nav' }}
+          </p>
+        </div>
+        <button
+          (click)="toggleCalendarAlwaysVisible()"
+          class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none"
+          [class]="calendarAlwaysVisible ? 'bg-stone-700' : 'bg-stone-200'"
+          role="switch"
+          [attr.aria-checked]="calendarAlwaysVisible"
+          aria-label="Toggle always-visible calendar"
+        >
+          <span
+            class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+            [class]="calendarAlwaysVisible ? 'translate-x-6' : 'translate-x-1'"
+          ></span>
+        </button>
+      </div>
+
     </div>
 
   </div>
