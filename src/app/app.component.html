@@ -15,9 +15,18 @@
       data-tauri-drag-region
     >
       @if (!sidebarIconOnly()) {
-        <span class="text-base font-bold text-stone-900 dark:text-stone-100 tracking-tight whitespace-nowrap">Daylog</span>
+        <span class="flex items-center gap-2 text-base font-bold text-stone-900 dark:text-stone-100 tracking-tight whitespace-nowrap">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" d="M50 5a45 45 0 1 1 0 90A45 45 0 0 1 50 5zM58 8a37 37 0 1 0 0 74A37 37 0 0 0 58 8z"/>
+            <path d="M36 70Q50 85 64 70Q50 58 36 70z"/>
+          </svg>
+          Daylog
+        </span>
       } @else {
-        <svg class="w-5 h-5 text-stone-900 dark:text-stone-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/></svg>
+        <svg class="w-5 h-5 text-stone-900 dark:text-stone-100" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" d="M50 5a45 45 0 1 1 0 90A45 45 0 0 1 50 5zM58 8a37 37 0 1 0 0 74A37 37 0 0 0 58 8z"/>
+          <path d="M36 70Q50 85 64 70Q50 58 36 70z"/>
+        </svg>
       }
     </div>
 
