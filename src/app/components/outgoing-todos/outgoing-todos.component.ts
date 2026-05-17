@@ -24,8 +24,9 @@ export class OutgoingTodosComponent implements OnInit {
 
   readonly currentDate = input.required<string>();
   readonly todoAdded = output<void>();
+  readonly todoToggled = output<void>();
 
-  private readonly todoContents = signal<Map<string, string>>(new Map());
+  readonly todoContents = signal<Map<string, string>>(new Map());
 
   readonly currentLineIndented = signal(false);
 
@@ -72,12 +73,51 @@ export class OutgoingTodosComponent implements OnInit {
   }
 
   async toggleTodo(todo: TodoItem): Promise<void> {
+    const today = this.currentDate();
     const contents = new Map(this.todoContents());
+
+    if (!todo.checked && todo.date < today) {
+      // Checking off a carry-forward todo: move it (and its children) to today
+      // so it stays visible as checked and contributes to today's progress bar,
+      // mirroring the behaviour of same-day todos.
+      const originalLines = (contents.get(todo.date) ?? '').split('\n');
+      const linesToMove = [todo.lineIndex];
+      for (let i = todo.lineIndex + 1; i < originalLines.length; i++) {
+        if (/^\s+-\s\[[ xX]\]/.test(originalLines[i])) {
+          linesToMove.push(i);
+        } else {
+          break;
+        }
+      }
+
+      const movedLines = linesToMove.map(i => originalLines[i]);
+      movedLines[0] = movedLines[0].replace('- [ ]', '- [x]');
+
+      for (const idx of [...linesToMove].reverse()) {
+        originalLines.splice(idx, 1);
+      }
+      const updatedOriginal = originalLines.join('\n');
+      contents.set(todo.date, updatedOriginal);
+      await this.storage.writeTodos(todo.date, updatedOriginal);
+
+      const currentContent = contents.get(today) ?? '';
+      const updatedCurrent = currentContent
+        ? `${currentContent}\n${movedLines.join('\n')}`
+        : movedLines.join('\n');
+      contents.set(today, updatedCurrent);
+      await this.storage.writeTodos(today, updatedCurrent);
+
+      this.todoContents.set(contents);
+      this.todoToggled.emit();
+      return;
+    }
+
     const content = contents.get(todo.date) ?? '';
     const updated = this.markdown.toggleCheckbox(content, todo.lineIndex);
     contents.set(todo.date, updated);
     this.todoContents.set(contents);
     await this.storage.writeTodos(todo.date, updated);
+    this.todoToggled.emit();
   }
 
   /** Reload after external changes (called by AppComponent after saves) */

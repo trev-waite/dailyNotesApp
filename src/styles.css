@@ -80,23 +80,6 @@
     background-color: rgb(120 113 108); /* stone-500 */
   }
 
-  .resize-handle-thin {
-    height: 4px;
-    cursor: row-resize;
-    background-color: rgb(231 229 228); /* stone-200 */
-    flex-shrink: 0;
-    transition: background-color 0.15s;
-  }
-  .resize-handle-thin:hover {
-    background-color: rgb(168 162 158); /* stone-400 */
-  }
-  :is(.dark) .resize-handle-thin {
-    background-color: rgb(68 64 60); /* stone-700 */
-  }
-  :is(.dark) .resize-handle-thin:hover {
-    background-color: rgb(120 113 108); /* stone-500 */
-  }
-
   /* Suppress text selection globally while the resize drag is active */
   .is-resizing * {
     -webkit-user-select: none !important;
