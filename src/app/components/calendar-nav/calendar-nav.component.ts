@@ -31,7 +31,8 @@ interface CalendarDay {
   isToday: boolean;
   isSelected: boolean;
   hasNote: boolean;
-  hasTodo: boolean;
+  hasTodoOpen: boolean;
+  hasTodoDone: boolean;
   cellClass: string;
   dotClass: string;
 }
@@ -40,10 +41,11 @@ type DayBase = Omit<CalendarDay, 'cellClass' | 'dotClass'>;
 
 function buildCellClass(day: DayBase): string {
   if (day.isSelected) {
-    return CELL_BASE + 'bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900';
+    const ring = day.isToday ? ' ring-2 ring-green-400 dark:ring-green-500' : '';
+    return CELL_BASE + 'bg-stone-800 text-white dark:bg-stone-200 dark:text-stone-900' + ring;
   }
   if (day.isToday) {
-    return CELL_BASE + 'bg-stone-200 text-stone-900 dark:bg-stone-700 dark:text-stone-100 font-semibold';
+    return CELL_BASE + 'ring-2 ring-green-400 dark:ring-green-500 text-stone-900 dark:text-stone-100 font-semibold';
   }
   if (!day.isCurrentMonth) {
     return CELL_BASE + 'text-stone-300 dark:text-stone-700 hover:bg-stone-50 dark:hover:bg-stone-900/50';
@@ -53,8 +55,9 @@ function buildCellClass(day: DayBase): string {
 
 function buildDotClass(day: DayBase): string {
   const base = 'absolute bottom-0.5 w-1 h-1 rounded-full ';
-  if (day.isSelected || day.isToday) return base + 'bg-current opacity-50';
-  if (day.hasTodo) return base + 'bg-blue-400 dark:bg-blue-500';
+  if (day.isSelected) return base + 'bg-white opacity-60';
+  if (day.hasTodoOpen) return base + 'bg-yellow-400 dark:bg-yellow-400';
+  if (day.hasTodoDone) return base + 'bg-green-400 dark:bg-green-500';
   return base + 'bg-stone-400 dark:bg-stone-500';
 }
 
@@ -67,7 +70,8 @@ function buildDotClass(day: DayBase): string {
 export class CalendarNavComponent {
   readonly selectedDate = input.required<string>();
   readonly noteDates = input<Set<string>>(new Set());
-  readonly todoDates = input<Set<string>>(new Set());
+  readonly openTodoDates = input<Set<string>>(new Set());
+  readonly doneTodoDates = input<Set<string>>(new Set());
   readonly compact = input<boolean>(true);
   readonly dateSelected = output<string>();
 
@@ -131,7 +135,8 @@ export class CalendarNavComponent {
     const { year, month } = this.viewMonth();
     const selected = this.selectedDate();
     const notes = this.noteDates();
-    const todos = this.todoDates();
+    const openTodos = this.openTodoDates();
+    const doneTodos = this.doneTodoDates();
     const today = this.today;
 
     const firstOfMonth = new Date(year, month, 1);
@@ -148,7 +153,8 @@ export class CalendarNavComponent {
         isToday: date === today,
         isSelected: date === selected,
         hasNote: notes.has(date),
-        hasTodo: todos.has(date),
+        hasTodoOpen: openTodos.has(date),
+        hasTodoDone: doneTodos.has(date),
       };
       return { ...base, cellClass: buildCellClass(base), dotClass: buildDotClass(base) };
     });

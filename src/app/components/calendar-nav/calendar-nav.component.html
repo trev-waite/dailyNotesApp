@@ -47,7 +47,7 @@
         [attr.aria-current]="day.isToday ? 'date' : null"
       >
         <span [class]="cellTextClass()">{{ day.dayNum }}</span>
-        @if (day.hasNote || day.hasTodo) {
+        @if (day.hasNote || day.hasTodoOpen || day.hasTodoDone) {
           <span [class]="day.dotClass"></span>
         }
       </button>

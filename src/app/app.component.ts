@@ -49,7 +49,8 @@ export class AppComponent implements OnInit {
   readonly todayString = todayString;
   readonly currentContent = signal('');
   readonly allNoteDates = signal<Set<string>>(new Set());
-  readonly allTodoDates = signal<Set<string>>(new Set());
+  readonly allOpenTodoDates = signal<Set<string>>(new Set());
+  readonly allDoneTodoDates = signal<Set<string>>(new Set());
   readonly saveStatus = signal<SaveStatus>('idle');
   readonly showSettings = signal(false);
   readonly activeView = signal<ActiveView>('editor');
@@ -68,7 +69,7 @@ export class AppComponent implements OnInit {
 
   toggleSidebar(): void {
     if (this.sidebarIconOnly()) {
-      this.sidebarWidth.set(this.sidebarPrevWidth);
+      this.sidebarWidth.set(Math.max(this.sidebarPrevWidth, 160));
     } else {
       this.sidebarPrevWidth = this.sidebarWidth();
       this.sidebarWidth.set(48);
@@ -123,7 +124,6 @@ export class AppComponent implements OnInit {
   startSidebarResize(e: MouseEvent): void {
     this.sidebarDragStartX = e.clientX;
     this.sidebarDragStartWidth = this.sidebarWidth();
-    this.sidebarPrevWidth = this.sidebarWidth();
     document.documentElement.classList.add('is-resizing');
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
@@ -260,6 +260,22 @@ export class AppComponent implements OnInit {
     void this.refreshNotesList();
   }
 
+  onTodoToggled(): void {
+    const contents = this.todosRef?.todoContents();
+    if (!contents) return;
+    const UNCHECKED = /^[ \t]*-\s\[ \]/m;
+    const CHECKED = /^[ \t]*-\s\[[xX]\]/m;
+    const openDates = new Set<string>();
+    const doneDates = new Set<string>();
+    for (const [date, content] of contents) {
+      if (!content.trim()) continue;
+      if (UNCHECKED.test(content)) openDates.add(date);
+      else if (CHECKED.test(content)) doneDates.add(date);
+    }
+    this.allOpenTodoDates.set(openDates);
+    this.allDoneTodoDates.set(doneDates);
+  }
+
   private async loadNote(date: string): Promise<void> {
     const content = await this.storage.readNote(date);
     if (this.currentDate() !== date) return;
@@ -268,12 +284,29 @@ export class AppComponent implements OnInit {
   }
 
   private async refreshNotesList(): Promise<void> {
-    const [notes, todos] = await Promise.all([
+    const [notes, todoDates] = await Promise.all([
       this.storage.listNotes(),
       this.storage.listTodoFiles(),
     ]);
     this.allNoteDates.set(new Set(notes));
-    this.allTodoDates.set(new Set(todos));
+
+    const openDates = new Set<string>();
+    const doneDates = new Set<string>();
+    const UNCHECKED = /^[ \t]*-\s\[ \]/m;
+    const CHECKED = /^[ \t]*-\s\[[xX]\]/m;
+    await Promise.all(
+      todoDates.map(async (date) => {
+        const content = await this.storage.readTodos(date);
+        if (!content.trim()) return;
+        if (UNCHECKED.test(content)) {
+          openDates.add(date);
+        } else if (CHECKED.test(content)) {
+          doneDates.add(date);
+        }
+      }),
+    );
+    this.allOpenTodoDates.set(openDates);
+    this.allDoneTodoDates.set(doneDates);
   }
 }
 

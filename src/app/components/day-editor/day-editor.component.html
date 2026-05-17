@@ -1,4 +1,4 @@
-<div class="bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-700 flex flex-col flex-1 overflow-hidden">
+<div class="bg-white dark:bg-stone-900 flex flex-col flex-1 overflow-hidden">
 
   <!-- Formatting toolbar -->
   <div class="flex items-center gap-0.5 border-b border-stone-100 dark:border-stone-800 px-2 py-1.5 shrink-0 flex-wrap">
@@ -10,9 +10,7 @@
     <div class="toolbar-sep"></div>
 
     <!-- Inline formatting -->
-    <button (mousedown)="$event.preventDefault(); toggleBold()" [class.bg-stone-100]="hasFormat('bold')" [class.dark:bg-stone-700]="hasFormat('bold')" title="Bold (⌘B)" class="toolbar-btn">
-      <svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
-    </button>
+    <button (mousedown)="$event.preventDefault(); toggleBold()" [class.bg-stone-100]="hasFormat('bold')" [class.dark:bg-stone-700]="hasFormat('bold')" title="Bold (⌘B)" class="toolbar-btn font-bold font-serif text-base w-7 h-7">B</button>
     <button (mousedown)="$event.preventDefault(); toggleItalic()" [class.bg-stone-100]="hasFormat('italic')" [class.dark:bg-stone-700]="hasFormat('italic')" title="Italic (⌘I)" class="toolbar-btn italic font-serif text-sm">I</button>
     <button (mousedown)="$event.preventDefault(); toggleInlineCode()" [class.bg-stone-100]="hasFormat('code')" [class.dark:bg-stone-700]="hasFormat('code')" title="Code (⌘⇧C)" class="toolbar-btn font-mono text-xs">&lt;/&gt;</button>
 
