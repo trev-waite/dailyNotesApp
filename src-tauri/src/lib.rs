@@ -267,6 +267,145 @@ async fn search_notes(notes_dir: String, query: String) -> Result<Vec<SearchResu
     Ok(results)
 }
 
+// ─── Diagram helpers ──────────────────────────────────────────────────────────
+
+fn validate_diagram_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= 128
+        && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+}
+
+fn diagram_path(diagrams_dir: &str, id: &str) -> Result<PathBuf, String> {
+    if !validate_diagram_id(id) {
+        return Err(format!("Invalid diagram id: {id}"));
+    }
+    let base = PathBuf::from(diagrams_dir);
+    let path = base.join(format!("{id}.json"));
+    // Ensure the resolved path stays under the diagrams dir
+    let canonical_base = base.canonicalize().map_err(|e| e.to_string())?;
+    let parent_canonical = path
+        .parent()
+        .ok_or("No parent")?
+        .canonicalize()
+        .unwrap_or_else(|_| canonical_base.clone());
+    if !parent_canonical.starts_with(&canonical_base) {
+        return Err("Path traversal detected".into());
+    }
+    Ok(path)
+}
+
+#[derive(serde::Serialize)]
+struct DiagramSummary {
+    id: String,
+    name: String,
+    updated_at: String,
+}
+
+#[tauri::command]
+async fn list_diagrams(diagrams_dir: String) -> Result<Vec<DiagramSummary>, String> {
+    let base = PathBuf::from(&diagrams_dir);
+    if !base.exists() {
+        return Ok(vec![]);
+    }
+    let canonical_base = base.canonicalize().map_err(|e| e.to_string())?;
+    let mut summaries: Vec<DiagramSummary> = std::fs::read_dir(&base)
+        .map_err(|e| e.to_string())?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let name = entry.file_name().into_string().ok()?;
+            if !name.ends_with(".json") {
+                return None;
+            }
+            let id = name.strip_suffix(".json")?.to_string();
+            if !validate_diagram_id(&id) {
+                return None;
+            }
+            let path = entry.path();
+            let canonical = path.parent()?.canonicalize().ok()?;
+            if !canonical.starts_with(&canonical_base) {
+                return None;
+            }
+            let content = std::fs::read_to_string(&path).ok()?;
+            let json: serde_json::Value = serde_json::from_str(&content).ok()?;
+            let diagram_name = json["name"].as_str().unwrap_or("Untitled").to_string();
+            let updated_at = json["updatedAt"].as_str().unwrap_or("").to_string();
+            Some(DiagramSummary { id, name: diagram_name, updated_at })
+        })
+        .collect();
+    summaries.sort_by(|a, b| b.updated_at.cmp(&a.updated_at));
+    Ok(summaries)
+}
+
+#[tauri::command]
+async fn read_diagram(diagrams_dir: String, id: String) -> Result<String, String> {
+    let base = PathBuf::from(&diagrams_dir);
+    let canonical_base = base.canonicalize().map_err(|e| e.to_string())?;
+    let path = diagram_path(&diagrams_dir, &id)?;
+    if !path.exists() {
+        return Err(format!("Diagram not found: {id}"));
+    }
+    let canonical_path = path.canonicalize().map_err(|e| e.to_string())?;
+    if !canonical_path.starts_with(&canonical_base) {
+        return Err("Path traversal detected".into());
+    }
+    std::fs::read_to_string(&canonical_path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn write_diagram(diagrams_dir: String, id: String, content: String) -> Result<(), String> {
+    let base = PathBuf::from(&diagrams_dir);
+    std::fs::create_dir_all(&base).map_err(|e| e.to_string())?;
+    let path = diagram_path(&diagrams_dir, &id)?;
+    // Validate content is valid JSON
+    serde_json::from_str::<serde_json::Value>(&content)
+        .map_err(|e| format!("Invalid JSON: {e}"))?;
+    std::fs::write(&path, content).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn delete_diagram(diagrams_dir: String, id: String) -> Result<(), String> {
+    let base = PathBuf::from(&diagrams_dir);
+    let canonical_base = base.canonicalize().map_err(|e| e.to_string())?;
+    let path = diagram_path(&diagrams_dir, &id)?;
+    if !path.exists() {
+        return Ok(());
+    }
+    let canonical_path = path.canonicalize().map_err(|e| e.to_string())?;
+    if !canonical_path.starts_with(&canonical_base) {
+        return Err("Path traversal detected".into());
+    }
+    std::fs::remove_file(&canonical_path).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn rename_diagram(
+    diagrams_dir: String,
+    id: String,
+    new_name: String,
+) -> Result<(), String> {
+    if new_name.is_empty() || new_name.len() > 255 {
+        return Err("Invalid name".into());
+    }
+    let base = PathBuf::from(&diagrams_dir);
+    let canonical_base = base.canonicalize().map_err(|e| e.to_string())?;
+    let path = diagram_path(&diagrams_dir, &id)?;
+    if !path.exists() {
+        return Err(format!("Diagram not found: {id}"));
+    }
+    let canonical_path = path.canonicalize().map_err(|e| e.to_string())?;
+    if !canonical_path.starts_with(&canonical_base) {
+        return Err("Path traversal detected".into());
+    }
+    let content = std::fs::read_to_string(&canonical_path).map_err(|e| e.to_string())?;
+    let mut json: serde_json::Value =
+        serde_json::from_str(&content).map_err(|e| format!("Invalid JSON: {e}"))?;
+    json["name"] = serde_json::Value::String(new_name);
+    let updated = serde_json::to_string_pretty(&json).map_err(|e| e.to_string())?;
+    std::fs::write(&canonical_path, updated).map_err(|e| e.to_string())
+}
+
+// ─── App entry point ─────────────────────────────────────────────────────────
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -283,6 +422,11 @@ pub fn run() {
             list_todo_files,
             list_notes_with_previews,
             search_notes,
+            list_diagrams,
+            read_diagram,
+            write_diagram,
+            delete_diagram,
+            rename_diagram,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

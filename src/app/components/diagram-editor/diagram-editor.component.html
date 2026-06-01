@@ -1,0 +1,964 @@
+<div class="diagram-root flex h-full overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100">
+
+  <!-- ── Left sidebar: diagram list ─────────────────────────────────────── -->
+  <aside
+    class="relative shrink-0 flex flex-col border-r border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-hidden select-none"
+    [style.width.px]="diagramsSidebarWidth()"
+  >
+
+    <!-- Resizer handle -->
+    <div
+      class="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-stone-300 dark:hover:bg-stone-600 z-30 transition-colors duration-150"
+      (mousedown)="startDiagramsSidebarResize($event)"
+    ></div>
+
+    <div class="px-3 pt-10 pb-2 flex items-center shrink-0" [class.justify-between]="!diagramsSidebarCollapsed()" [class.justify-center]="diagramsSidebarCollapsed()">
+      @if (!diagramsSidebarCollapsed()) {
+        <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">Diagrams</span>
+      }
+      <button
+        (click)="newDiagram()"
+        class="flex items-center justify-center gap-1 text-xs rounded-md bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 transition-colors"
+        [class.px-2]="!diagramsSidebarCollapsed()"
+        [class.py-1]="!diagramsSidebarCollapsed()"
+        [class.w-7]="diagramsSidebarCollapsed()"
+        [class.h-7]="diagramsSidebarCollapsed()"
+        title="New diagram"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        @if (!diagramsSidebarCollapsed()) {
+          New
+        }
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto py-1 px-2">
+      @if (diagrams().length === 0) {
+        <p class="text-xs text-stone-400 dark:text-stone-600 italic px-2 py-3 text-center">
+          @if (diagramsSidebarCollapsed()) {
+            Empty
+          } @else {
+            No diagrams yet.<br>Click New to start.
+          }
+        </p>
+      }
+      @for (d of diagrams(); track d.id) {
+        <div class="relative">
+          @if (renamingDiagramId() === d.id) {
+            <input
+              class="w-full px-2 py-1.5 text-xs rounded-md bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 outline-none ring-1 ring-green-400"
+              [value]="renamingValue()"
+              (input)="renamingValue.set($any($event.target).value)"
+              (keydown.enter)="commitRename()"
+              (keydown.escape)="renamingDiagramId.set(null)"
+              (blur)="commitRename()"
+              autofocus
+            />
+          } @else {
+            <button
+              class="w-full text-left px-2 py-2 rounded-md text-xs transition-colors"
+              [class.bg-stone-100]="activeDiagramId() === d.id"
+              [class.dark:bg-stone-800]="activeDiagramId() === d.id"
+              [class.font-medium]="activeDiagramId() === d.id"
+              [class.text-stone-900]="activeDiagramId() === d.id"
+              [class.dark:text-stone-100]="activeDiagramId() === d.id"
+              [class.text-stone-600]="activeDiagramId() !== d.id"
+              [class.dark:text-stone-400]="activeDiagramId() !== d.id"
+              [class.hover:bg-stone-100]="activeDiagramId() !== d.id"
+              [class.dark:hover:bg-stone-800]="activeDiagramId() !== d.id"
+              (click)="loadDiagram(d.id)"
+              (contextmenu)="showContextMenu($event, d.id)"
+              [title]="d.name"
+            >
+              <span class="flex items-center gap-1.5" [class.justify-center]="diagramsSidebarCollapsed()">
+                <svg class="w-3.5 h-3.5 shrink-0 text-stone-400 dark:text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25a2.25 2.25 0 0 1-13.5 18v-2.25Z"/></svg>
+                @if (!diagramsSidebarCollapsed()) {
+                  <span class="truncate">{{ d.name }}</span>
+                }
+              </span>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Toggle Sidebar at bottom -->
+    <div class="mt-auto border-t border-stone-200 dark:border-stone-800 p-2 shrink-0">
+      <button
+        (click)="toggleDiagramsSidebar()"
+        class="w-full text-left px-2 py-1.5 rounded-md text-xs text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center gap-1.5"
+        [class.justify-center]="diagramsSidebarCollapsed()"
+        [title]="diagramsSidebarCollapsed() ? 'Expand diagrams sidebar' : 'Collapse diagrams sidebar'"
+      >
+        <svg
+          class="w-4 h-4 shrink-0 transition-transform duration-200"
+          [class.rotate-180]="!diagramsSidebarCollapsed()"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5"/>
+        </svg>
+        @if (!diagramsSidebarCollapsed()) {
+          <span>Collapse sidebar</span>
+        }
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ── Editor area ─────────────────────────────────────────────────────── -->
+  <div class="flex flex-col flex-1 overflow-hidden">
+
+    @if (!activeDiagramId()) {
+      <!-- Empty state -->
+      <div class="flex flex-col flex-1 items-center justify-center gap-4 select-none">
+        <svg class="w-12 h-12 text-stone-300 dark:text-stone-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z"/></svg>
+        <p class="text-sm text-stone-400 dark:text-stone-600">Select a diagram or create a new one</p>
+        <button
+          (click)="newDiagram()"
+          class="px-4 py-2 rounded-lg text-sm font-medium bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 hover:bg-stone-700 dark:hover:bg-stone-300 transition-colors"
+        >New Diagram</button>
+      </div>
+    } @else {
+
+      <!-- ── Toolbar ──────────────────────────────────────────────────────── -->
+      <div class="shrink-0 flex items-center gap-2 px-4 py-2 border-b border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 select-none">
+
+        <!-- Diagram name -->
+        <input
+          class="flex-1 min-w-0 text-sm font-medium bg-transparent outline-none text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-600 truncate"
+          [value]="diagramName()"
+          (blur)="updateDiagramName($any($event.target).value)"
+          (keydown.enter)="$any($event.target).blur()"
+          placeholder="Untitled"
+        />
+
+        <div class="h-4 w-px bg-stone-200 dark:bg-stone-700"></div>
+
+        <!-- Undo / Redo -->
+        <button (click)="undo()" [disabled]="!canUndo()" class="toolbar-icon-btn" title="Undo (Ctrl+Z)">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/></svg>
+        </button>
+        <button (click)="redo()" [disabled]="!canRedo()" class="toolbar-icon-btn" title="Redo (Ctrl+Shift+Z)">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3"/></svg>
+        </button>
+
+        <div class="h-4 w-px bg-stone-200 dark:bg-stone-700"></div>
+
+        <!-- Snap -->
+        <button
+          (click)="snapToGridEnabled.update(v => !v)"
+          class="toolbar-icon-btn"
+          [class.toolbar-icon-btn--active]="snapToGridEnabled()"
+          title="Snap to grid"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6h16.5M3.75 12h16.5M3.75 18h16.5M6 3.75v16.5M12 3.75v16.5M18 3.75v16.5"/></svg>
+        </button>
+
+        <!-- Grid -->
+        <button
+          (click)="showGrid.update(v => !v)"
+          class="toolbar-icon-btn"
+          [class.toolbar-icon-btn--active]="showGrid()"
+          title="Toggle grid"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </button>
+
+        <div class="h-4 w-px bg-stone-200 dark:bg-stone-700"></div>
+
+        <!-- Tool mode: Select / Hand -->
+        <div class="flex items-center gap-0.5 p-0.5 rounded-md bg-stone-100 dark:bg-stone-800">
+          <button
+            (click)="activeTool.set('select')"
+            class="toolbar-icon-btn"
+            [class.toolbar-icon-btn--active]="activeTool() === 'select'"
+            title="Select tool (V)"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 4l7 18 3-7 7-3z"/>
+            </svg>
+          </button>
+          <button
+            (click)="activeTool.set('hand')"
+            class="toolbar-icon-btn"
+            [class.toolbar-icon-btn--active]="activeTool() === 'hand'"
+            title="Hand / Pan tool (H)"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 11.5V7a1 1 0 0 1 2 0v3m0-3V5a1 1 0 0 1 2 0v3m0-2a1 1 0 0 1 2 0v4m0-2a1 1 0 0 1 2 0v6a6 6 0 0 1-6 6H9a5 5 0 0 1-5-5v-3a1 1 0 0 1 2 0"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="h-4 w-px bg-stone-200 dark:bg-stone-700"></div>
+        <button (click)="zoomOut()" class="toolbar-icon-btn" title="Zoom out">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14"/></svg>
+        </button>
+        <button (click)="resetZoom()" class="text-xs text-stone-500 dark:text-stone-400 w-10 text-center hover:text-stone-700 dark:hover:text-stone-200 transition-colors" title="Reset zoom">{{ zoomPercent() }}%</button>
+        <button (click)="zoomIn()" class="toolbar-icon-btn" title="Zoom in">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+        </button>
+        <button (click)="fitToView()" class="toolbar-icon-btn" title="Fit to view">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15"/></svg>
+        </button>
+
+        <div class="h-4 w-px bg-stone-200 dark:bg-stone-700"></div>
+
+        <!-- Copy SVG -->
+        <button (click)="copyAsSvg()" class="toolbar-icon-btn" title="Copy as SVG">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184"/></svg>
+        </button>
+
+        <!-- Save status -->
+        <span class="text-xs text-stone-400 dark:text-stone-600 w-12 text-right">
+          @if (saveStatus() === 'saving') { saving… }
+          @else if (saveStatus() === 'saved') { saved }
+        </span>
+
+        <!-- Online/Offline toggle -->
+        <div class="relative flex items-center gap-2 ml-2">
+          <!-- Avatar placeholder for future presence -->
+          <div class="w-6 h-6 rounded-full border border-dashed border-stone-300 dark:border-stone-600 flex items-center justify-center opacity-40" title="Collaborators will appear here in online mode">
+            <svg class="w-3 h-3 text-stone-400 dark:text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+          </div>
+
+          <!-- Pill toggle -->
+          <button
+            class="online-toggle"
+            (click)="onOnlineToggleClick()"
+            title="Online collaboration"
+          >
+            <span class="online-toggle__label online-toggle__label--active">Offline</span>
+            <span class="online-toggle__knob online-toggle__knob--offline"></span>
+            <span class="online-toggle__label online-toggle__label--inactive">Online</span>
+          </button>
+
+          @if (onlineModeTooltipVisible()) {
+            <div class="absolute right-0 top-8 z-50 px-3 py-1.5 rounded-lg text-xs whitespace-nowrap bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-lg animate-slide-in">
+              Collaboration coming soon
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- ── Canvas + Palette + Properties ─────────────────────────────── -->
+      <div class="flex flex-1 overflow-hidden">
+
+        <!-- Shape palette -->
+        <div class="shrink-0 flex flex-col border-r border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-y-auto"
+             [class.w-12]="isPaletteCollapsed()"
+             [class.w-36]="!isPaletteCollapsed()">
+
+          <!-- Collapse button -->
+          <button
+            (click)="isPaletteCollapsed.update(v => !v)"
+            class="flex items-center justify-center h-8 text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 transition-colors shrink-0"
+            [title]="isPaletteCollapsed() ? 'Expand palette' : 'Collapse palette'"
+          >
+            <svg class="w-3.5 h-3.5 transition-transform duration-200" [class.rotate-180]="isPaletteCollapsed()" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+          </button>
+
+          @if (!isPaletteCollapsed()) {
+            @for (group of paletteGroups; track group.label) {
+              <div class="px-2 pb-2">
+                <p class="text-[9px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-600 px-1 py-1.5">{{ group.label }}</p>
+                @for (type of group.types; track type) {
+                  <div
+                    class="palette-item"
+                    (click)="selectPlacementType(type)"
+                    [class.palette-item--pending]="pendingPlacementType() === type"
+                    [title]="nodeTypeLabels[type] + ' — click to select, click on canvas to place'"
+                  >
+                    <span class="palette-item__icon">
+                      @switch (type) {
+                        @case ('std-rect') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="1.5"/></svg>
+                        }
+                        @case ('std-circle') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/></svg>
+                        }
+                        @case ('std-diamond') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><polygon points="12,3 21,12 12,21 3,12"/></svg>
+                        }
+                        @case ('std-triangle') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><polygon points="12,3 21,21 3,21"/></svg>
+                        }
+                        @case ('server') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="5" rx="1"/><rect x="3" y="11" width="18" height="5" rx="1"/><circle cx="7" cy="6.5" r="0.75" fill="currentColor"/><circle cx="7" cy="13.5" r="0.75" fill="currentColor"/></svg>
+                        }
+                        @case ('database') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.657 3.582 3 8 3s8-1.343 8-3V6"/><path d="M4 12v6c0 1.657 3.582 3 8 3s8-1.343 8-3v-6"/></svg>
+                        }
+                        @case ('load-balancer') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M12 7v4M12 11l-5 6M12 11l5 6"/></svg>
+                        }
+                        @case ('api-gateway') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><polygon points="12,3 21,8 21,16 12,21 3,16 3,8"/></svg>
+                        }
+                        @case ('microservice') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3 1.5"><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+                        }
+                        @case ('queue') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><ellipse cx="5" cy="12" rx="2" ry="5"/><rect x="5" y="7" width="14" height="10"/><ellipse cx="19" cy="12" rx="2" ry="5"/></svg>
+                        }
+                        @case ('browser') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 8h20"/><circle cx="6" cy="5.5" r="0.75" fill="currentColor"/><circle cx="9" cy="5.5" r="0.75" fill="currentColor"/><circle cx="12" cy="5.5" r="0.75" fill="currentColor"/></svg>
+                        }
+                        @case ('cloud') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M18 10a4 4 0 0 0-7.65-1.6A5 5 0 1 0 6 18h12a4 4 0 0 0 0-8Z"/></svg>
+                        }
+                        @case ('storage-bucket') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path d="M5 8h14M5 8l2 12h10L19 8M5 8l2-4h10l2 4"/></svg>
+                        }
+                        @case ('lambda') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><text x="12" y="16" text-anchor="middle" font-size="10" stroke="none" fill="currentColor" font-family="serif">λ</text></svg>
+                        }
+                        @case ('cache') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="4" rx="1"/><rect x="3" y="11" width="18" height="4" rx="1"/><rect x="3" y="17" width="18" height="4" rx="1"/></svg>
+                        }
+                        @case ('network-boundary') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 2"><rect x="2" y="2" width="20" height="20" rx="3"/></svg>
+                        }
+                        @case ('user') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="7" r="4"/><path d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8"/></svg>
+                        }
+                        @case ('external-system') {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><rect x="5" y="5" width="14" height="14" rx="1"/></svg>
+                        }
+                        @default {
+                          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                        }
+                      }
+                    </span>
+                    <span class="palette-item__label text-[10px] leading-tight">{{ nodeTypeLabels[type] }}</span>
+                  </div>
+                }
+              </div>
+            }
+            <!-- Connection hint -->
+            @if (!isPaletteCollapsed()) {
+              <p class="px-3 py-2 text-[9px] text-stone-400 dark:text-stone-600 leading-tight border-t border-stone-100 dark:border-stone-800 mt-1">
+                Hover a node to reveal <strong>connection ports</strong>. Drag a port to connect nodes.
+              </p>
+            }
+          } @else {
+            <!-- Collapsed: just icons -->
+            <div class="flex flex-col items-center gap-1 px-1 pb-2">
+              @for (group of paletteGroups; track group.label) {
+                @for (type of group.types; track type) {
+                  <div
+                    class="w-8 h-8 flex items-center justify-center rounded-md cursor-pointer text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-700 dark:hover:text-stone-200 transition-colors"
+                    [class.palette-item--pending]="pendingPlacementType() === type"
+                    (click)="selectPlacementType(type)"
+                    [title]="nodeTypeLabels[type] + ' — click to select, click on canvas to place'"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                  </div>
+                }
+              }
+            </div>
+          }
+        </div>
+
+        <!-- ── SVG Canvas ────────────────────────────────────────────────── -->
+        <div class="relative flex-1 overflow-hidden canvas-area"
+             (mousedown)="onCanvasMouseDown($event)"
+             (contextmenu)="$event.preventDefault()"
+             (wheel)="onWheel($event)">
+
+          <svg
+            #svgCanvas
+            class="w-full h-full select-none"
+            [style.cursor]="canvasCursor"
+            (contextmenu)="$event.preventDefault()"
+          >
+          >
+            <defs>
+              <!-- Arrowhead markers -->
+              <marker id="arrow-default" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="rgb(168 162 158)" />
+              </marker>
+              <marker id="arrow-selected" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="rgb(34 197 94)" />
+              </marker>
+              <marker id="arrow-ghost" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L8,3 z" fill="rgb(99 102 241)" opacity="0.6" />
+              </marker>
+
+              <!-- Dot grid pattern -->
+              @if (showGrid()) {
+                <pattern id="dotGrid" x="0" y="0"
+                         [attr.width]="effectiveGridStep() * viewport().zoom"
+                         [attr.height]="effectiveGridStep() * viewport().zoom"
+                         patternUnits="userSpaceOnUse"
+                         [attr.patternTransform]="'translate(' + viewport().x + ',' + viewport().y + ')'">
+                  <circle [attr.cx]="(effectiveGridStep() * viewport().zoom) / 2" [attr.cy]="(effectiveGridStep() * viewport().zoom) / 2" r="0.8" fill="rgb(214 211 208)" class="dark:fill-stone-700"/>
+                </pattern>
+              }
+            </defs>
+
+            <!-- Grid background -->
+            @if (showGrid()) {
+              <rect width="100%" height="100%" fill="url(#dotGrid)" />
+            }
+
+            <!-- Viewport group -->
+            <g [attr.transform]="viewportTransform()">
+
+              <!-- Edges -->
+              @for (edge of edges(); track edge.id) {
+                <g class="edge-group" (click)="onEdgeClick($event, edge.id)">
+                  <!-- Wide invisible hit area -->
+                  <path
+                    [attr.d]="edgePath(edge)"
+                    fill="none"
+                    stroke="transparent"
+                    stroke-width="12"
+                    class="cursor-pointer"
+                  />
+                  <path
+                    [attr.d]="edgePath(edge)"
+                    fill="none"
+                    [attr.stroke]="edgeStrokeColor(edge)"
+                    stroke-width="1.5"
+                    [attr.stroke-dasharray]="edge.style === 'dashed' ? '6 4' : null"
+                    [attr.marker-end]="selectedEdgeIds().has(edge.id) ? 'url(#arrow-selected)' : 'url(#arrow-default)'"
+                    class="transition-[stroke] duration-100 pointer-events-none"
+                  />
+                  @if (edge.label) {
+                    <text
+                      [attr.x]="edgeMidpoint(edge).x"
+                      [attr.y]="edgeMidpoint(edge).y - 6"
+                      text-anchor="middle"
+                      class="text-[10px] fill-stone-500 dark:fill-stone-400 pointer-events-none"
+                      font-size="10"
+                    >{{ edge.label }}</text>
+                  }
+                </g>
+              }
+
+              <!-- Ghost edge (while drawing) -->
+              @if (drawingEdge()) {
+                <path
+                  [attr.d]="ghostEdgePath()"
+                  fill="none"
+                  stroke="rgb(99 102 241)"
+                  stroke-width="1.5"
+                  stroke-dasharray="5 3"
+                  opacity="0.6"
+                  marker-end="url(#arrow-ghost)"
+                  class="pointer-events-none"
+                />
+              }
+
+              <!-- Nodes -->
+              @for (node of nodes(); track node.id; let i = $index) {
+                <g
+                  class="node-group"
+                  [attr.transform]="'translate(' + node.x + ',' + node.y + ')'"
+                  (mousedown)="onNodeMouseDown($event, node.id)"
+                  (dblclick)="onNodeDoubleClick($event, node.id)"
+                  [style.cursor]="'grab'"
+                >
+                  <!-- Shape body -->
+                  @switch (node.type) {
+
+                    @case ('std-rect') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="4"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5" />
+                    }
+
+                    @case ('std-circle') {
+                      <ellipse [attr.cx]="node.width / 2" [attr.cy]="node.height / 2" [attr.rx]="node.width / 2" [attr.ry]="node.height / 2"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5" />
+                    }
+
+                    @case ('std-diamond') {
+                      <polygon [attr.points]="(node.width / 2) + ',0 ' + node.width + ',' + (node.height / 2) + ' ' + (node.width / 2) + ',' + node.height + ' 0,' + (node.height / 2)"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5" />
+                    }
+
+                    @case ('std-triangle') {
+                      <polygon [attr.points]="(node.width / 2) + ',0 ' + node.width + ',' + node.height + ' 0,' + node.height"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5" />
+                    }
+
+                    @case ('network-boundary') {
+                      <rect
+                        [attr.width]="node.width"
+                        [attr.height]="node.height"
+                        rx="8"
+                        fill="transparent"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                        stroke-dasharray="8 5"
+                      />
+                      <text x="8" y="16" font-size="9" class="fill-stone-400 dark:fill-stone-500" font-weight="600">{{ node.label }}</text>
+                    }
+
+                    @case ('database') {
+                      <rect
+                        x="0" y="12"
+                        [attr.width]="node.width"
+                        [attr.height]="node.height - 12"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                        rx="0"
+                      />
+                      <ellipse
+                        [attr.cx]="node.width / 2" cy="12"
+                        [attr.rx]="node.width / 2 - 1" ry="10"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                      <ellipse
+                        [attr.cx]="node.width / 2" [attr.cy]="node.height"
+                        [attr.rx]="node.width / 2 - 1" ry="10"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                    }
+
+                    @case ('api-gateway') {
+                      <polygon
+                        [attr.points]="(node.width/2) + ',4 ' + (node.width-4) + ',' + (node.height*0.3) + ' ' + (node.width-4) + ',' + (node.height*0.7) + ' ' + (node.width/2) + ',' + (node.height-4) + ' 4,' + (node.height*0.7) + ' 4,' + (node.height*0.3)"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                    }
+
+                    @case ('queue') {
+                      <rect
+                        x="12" y="0"
+                        [attr.width]="node.width - 24"
+                        [attr.height]="node.height"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                      <ellipse
+                        cx="12" [attr.cy]="node.height / 2"
+                        rx="10" [attr.ry]="node.height / 2 - 1"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                      <ellipse
+                        [attr.cx]="node.width - 12" [attr.cy]="node.height / 2"
+                        rx="10" [attr.ry]="node.height / 2 - 1"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                    }
+
+                    @case ('cache') {
+                      <rect x="0" y="0" [attr.width]="node.width" height="18" rx="3" [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800" [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                      <rect x="0" y="22" [attr.width]="node.width" height="18" rx="3" [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800" [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                      <rect x="0" y="44" [attr.width]="node.width" height="18" rx="3" [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800" [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                    }
+
+                    @case ('cloud') {
+                      <path
+                        [attr.d]="'M ' + (node.width * 0.3) + ' ' + (node.height * 0.85) + ' Q 4 ' + (node.height * 0.85) + ' 4 ' + (node.height * 0.55) + ' Q 4 ' + (node.height * 0.25) + ' ' + (node.width * 0.3) + ' ' + (node.height * 0.3) + ' Q ' + (node.width * 0.35) + ' ' + (node.height * 0.05) + ' ' + (node.width * 0.6) + ' ' + (node.height * 0.1) + ' Q ' + (node.width * 0.85) + ' ' + (node.height * 0.05) + ' ' + (node.width * 0.9) + ' ' + (node.height * 0.3) + ' Q ' + (node.width - 4) + ' ' + (node.height * 0.3) + ' ' + (node.width - 4) + ' ' + (node.height * 0.55) + ' Q ' + (node.width - 4) + ' ' + (node.height * 0.85) + ' ' + (node.width * 0.7) + ' ' + (node.height * 0.85) + ' Z'"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                    }
+
+                    @case ('external-system') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="4"
+                        fill="transparent" [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                      <rect x="4" y="4" [attr.width]="node.width - 8" [attr.height]="node.height - 8" rx="2"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1"/>
+                    }
+
+                    @case ('browser') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="4"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                      <line x1="0" [attr.y1]="18" [attr.x2]="node.width" y2="18"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1"/>
+                      <circle cx="10" cy="10" r="3" fill="rgb(239 68 68)" opacity="0.5"/>
+                      <circle cx="20" cy="10" r="3" fill="rgb(234 179 8)" opacity="0.5"/>
+                      <circle cx="30" cy="10" r="3" fill="rgb(34 197 94)" opacity="0.5"/>
+                    }
+
+                    @case ('user') {
+                      <circle
+                        [attr.cx]="node.width / 2" [attr.cy]="node.height * 0.3"
+                        [attr.r]="mathMin(node.width, node.height) * 0.18"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'"
+                        class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                      />
+                      <path
+                        [attr.d]="'M ' + (node.width * 0.15) + ' ' + (node.height * 0.85) + ' Q ' + (node.width * 0.15) + ' ' + (node.height * 0.55) + ' ' + (node.width / 2) + ' ' + (node.height * 0.55) + ' Q ' + (node.width * 0.85) + ' ' + (node.height * 0.55) + ' ' + (node.width * 0.85) + ' ' + (node.height * 0.85)"
+                        fill="none"
+                        [attr.stroke]="nodeStrokeColor(node)"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                      />
+                    }
+
+                    @case ('server') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="4"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                      <line x1="8" [attr.y1]="node.height * 0.33" [attr.x2]="node.width - 8" [attr.y2]="node.height * 0.33"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1" opacity="0.4"/>
+                      <line x1="8" [attr.y1]="node.height * 0.66" [attr.x2]="node.width - 8" [attr.y2]="node.height * 0.66"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1" opacity="0.4"/>
+                      <circle [attr.cx]="node.width - 14" [attr.cy]="node.height * 0.33 / 2" r="3"
+                        fill="rgb(34 197 94)" opacity="0.6"/>
+                    }
+
+                    @case ('lambda') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="4"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                      <text [attr.x]="node.width / 2" [attr.y]="node.height * 0.58" text-anchor="middle"
+                        font-size="22" font-family="serif" class="fill-stone-400 dark:fill-stone-500">λ</text>
+                    }
+
+                    @case ('load-balancer') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="24"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                    }
+
+                    @case ('microservice') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="6"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"
+                        stroke-dasharray="6 3"/>
+                    }
+
+                    @case ('storage-bucket') {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="4"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                      <line x1="0" [attr.y1]="20" [attr.x2]="node.width" y2="20"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1" opacity="0.4"/>
+                    }
+
+                    @case ('text-label') {
+                      <!-- transparent hit area; text rendered below with larger font -->
+                      <rect [attr.width]="node.width" [attr.height]="node.height"
+                        fill="transparent"
+                        [attr.stroke]="selectedNodeIds().has(node.id) ? 'rgb(34 197 94)' : 'transparent'"
+                        stroke-width="1" stroke-dasharray="4 2" rx="2"/>
+                    }
+
+                    @default {
+                      <rect [attr.width]="node.width" [attr.height]="node.height" rx="4"
+                        [attr.fill]="node.color ?? 'rgb(245 245 244)'" class="dark:fill-stone-800"
+                        [attr.stroke]="nodeStrokeColor(node)" stroke-width="1.5"/>
+                    }
+
+                  }
+
+                  <!-- Text-label: render editable text inline -->
+                  @if (node.type === 'text-label') {
+                    @if (editingLabelNodeId() === node.id) {
+                      <foreignObject [attr.x]="2" [attr.y]="4" [attr.width]="node.width - 4" [attr.height]="node.height - 8">
+                        <input
+                          xmlns="http://www.w3.org/1999/xhtml"
+                          class="diagram-label-input"
+                          style="font-size:14px;font-weight:600;"
+                          [value]="node.label"
+                          (input)="updateNodeLabel(node.id, $any($event.target).value)"
+                          (keydown.enter)="editingLabelNodeId.set(null)"
+                          (keydown.escape)="editingLabelNodeId.set(null)"
+                          (blur)="editingLabelNodeId.set(null)"
+                          autofocus
+                        />
+                      </foreignObject>
+                    } @else {
+                      <text
+                        [attr.x]="node.width / 2"
+                        [attr.y]="node.height / 2 + 5"
+                        text-anchor="middle"
+                        font-size="14"
+                        font-weight="600"
+                        class="fill-stone-800 dark:fill-stone-100 pointer-events-none"
+                      >{{ node.label }}</text>
+                    }
+                  }
+
+                  <!-- Label (unless network-boundary or text-label which draw their own) -->
+                  @if (node.type !== 'network-boundary' && node.type !== 'text-label') {
+                    @if (editingLabelNodeId() === node.id) {
+                      <foreignObject
+                        [attr.x]="4"
+                        [attr.y]="node.height / 2 - 12"
+                        [attr.width]="node.width - 8"
+                        height="24"
+                      >
+                        <input
+                          xmlns="http://www.w3.org/1999/xhtml"
+                          class="diagram-label-input"
+                          [value]="node.label"
+                          (input)="updateNodeLabel(node.id, $any($event.target).value)"
+                          (keydown.enter)="editingLabelNodeId.set(null)"
+                          (keydown.escape)="editingLabelNodeId.set(null)"
+                          (blur)="editingLabelNodeId.set(null)"
+                          autofocus
+                        />
+                      </foreignObject>
+                    } @else {
+                      <text
+                        [attr.x]="node.width / 2"
+                        [attr.y]="node.height / 2 + 4"
+                        text-anchor="middle"
+                        font-size="11"
+                        font-weight="500"
+                        class="fill-stone-700 dark:fill-stone-200 pointer-events-none"
+                      >{{ node.label }}</text>
+                    }
+                  }
+
+                  <!-- Port handles (visible on selection/hover) -->
+                  @for (port of portSides; track port) {
+                    <circle
+                      [attr.cx]="portPosition(node, port).x - node.x"
+                      [attr.cy]="portPosition(node, port).y - node.y"
+                      r="5"
+                      [attr.fill]="hoveredPort()?.nodeId === node.id && hoveredPort()?.port === port ? 'rgb(34 197 94)' : 'white'"
+                      stroke="rgb(34 197 94)"
+                      stroke-width="1.5"
+                      class="port-handle"
+                      (mousedown)="onPortMouseDown($event, node.id, port)"
+                      (mouseup)="onPortMouseUp($event, node.id, port)"
+                    />
+                  }
+
+                  <!-- Resize handles (visible when this node is the single selection) -->
+                  @if (singleSelectedNode()?.id === node.id) {
+                    @for (def of resizeHandleDefs; track def.h) {
+                      <rect
+                        class="resize-handle"
+                        [attr.x]="resizeHandlePos(node, def.h).x - 4"
+                        [attr.y]="resizeHandlePos(node, def.h).y - 4"
+                        width="8" height="8" rx="1"
+                        fill="white"
+                        stroke="rgb(34 197 94)"
+                        stroke-width="1.5"
+                        [style.cursor]="def.cursor"
+                        (mousedown)="onResizeHandleMouseDown($event, node.id, def.h)"
+                      />
+                    }
+                  }
+
+                </g>
+              }
+
+              <!-- Rubber-band selection rect -->
+              @if (rubberBandRect()) {
+                <rect
+                  [attr.x]="rubberBandRect()!.x"
+                  [attr.y]="rubberBandRect()!.y"
+                  [attr.width]="rubberBandRect()!.width"
+                  [attr.height]="rubberBandRect()!.height"
+                  fill="rgba(34, 197, 94, 0.05)"
+                  stroke="rgb(34 197 94)"
+                  stroke-width="1"
+                  stroke-dasharray="4 2"
+                  class="pointer-events-none"
+                />
+              }
+
+            </g>
+          </svg>
+        </div>
+
+        <!-- ── Properties panel ──────────────────────────────────────────── -->
+        @if (isPropertiesOpen()) {
+          <div class="w-56 shrink-0 border-l border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 overflow-y-auto flex flex-col animate-slide-in">
+            <div class="px-4 py-3 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between shrink-0">
+              <span class="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider">Properties</span>
+              <button (click)="clearSelection()" class="text-stone-400 dark:text-stone-600 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+
+            @if (singleSelectedNode(); as node) {
+              <div class="px-4 py-3 flex flex-col gap-4 text-xs">
+
+                <!-- Label -->
+                <div>
+                  <label class="props-label">Label</label>
+                  <input
+                    class="props-input"
+                    [value]="node.label"
+                    (input)="updateNodeLabel(node.id, $any($event.target).value)"
+                  />
+                </div>
+
+                <!-- Type -->
+                <div>
+                  <label class="props-label">Type</label>
+                  <select
+                    class="props-input"
+                    [value]="node.type"
+                    (change)="updateNodeType(node.id, $any($event.target).value)"
+                  >
+                    @for (t of allNodeTypes; track t) {
+                      <option [value]="t">{{ nodeTypeLabels[t] }}</option>
+                    }
+                  </select>
+                </div>
+
+                <!-- Color -->
+                <div>
+                  <label class="props-label">Color</label>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    @for (swatch of ['#f5f5f4','#fde68a','#bbf7d0','#bfdbfe','#fecaca','#e9d5ff','#fed7aa','#1c1917']; track swatch) {
+                      <button
+                        class="w-5 h-5 rounded-sm border border-stone-300 dark:border-stone-600 transition-transform hover:scale-110"
+                        [style.background]="swatch"
+                        [class.ring-2]="node.color === swatch"
+                        [class.ring-green-400]="node.color === swatch"
+                        (click)="updateNodeColor(node.id, node.color === swatch ? null : swatch)"
+                      ></button>
+                    }
+                  </div>
+                </div>
+
+                <!-- Note -->
+                <div>
+                  <label class="props-label">Note</label>
+                  <textarea
+                    class="props-input resize-none h-20"
+                    [value]="node.note"
+                    (input)="updateNodeNote(node.id, $any($event.target).value)"
+                    placeholder="Add a description…"
+                  ></textarea>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex flex-col gap-1 pt-1 border-t border-stone-100 dark:border-stone-800">
+                  <button (click)="duplicateSelected()" class="props-action-btn">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>
+                    Duplicate (Ctrl+D)
+                  </button>
+                  <button (click)="deleteSelected()" class="props-action-btn props-action-btn--danger">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                    Delete (Del)
+                  </button>
+                </div>
+
+              </div>
+            }
+
+            @if (singleSelectedEdge(); as edge) {
+              <div class="px-4 py-3 flex flex-col gap-4 text-xs">
+
+                <!-- Label -->
+                <div>
+                  <label class="props-label">Label</label>
+                  <input
+                    class="props-input"
+                    [value]="edge.label"
+                    (input)="updateEdgeLabel(edge.id, $any($event.target).value)"
+                    placeholder="e.g. HTTP/REST"
+                  />
+                </div>
+
+                <!-- Style -->
+                <div>
+                  <label class="props-label">Style</label>
+                  <div class="flex gap-2 mt-1">
+                    <button
+                      (click)="updateEdgeStyle(edge.id, 'solid')"
+                      class="flex-1 py-1 rounded border text-xs transition-colors"
+                      [class.border-green-400]="edge.style === 'solid'"
+                      [class.bg-green-50]="edge.style === 'solid'"
+                      [class.dark:bg-green-950]="edge.style === 'solid'"
+                      [class.border-stone-200]="edge.style !== 'solid'"
+                      [class.dark:border-stone-700]="edge.style !== 'solid'"
+                    >Solid</button>
+                    <button
+                      (click)="updateEdgeStyle(edge.id, 'dashed')"
+                      class="flex-1 py-1 rounded border text-xs transition-colors"
+                      [class.border-green-400]="edge.style === 'dashed'"
+                      [class.bg-green-50]="edge.style === 'dashed'"
+                      [class.dark:bg-green-950]="edge.style === 'dashed'"
+                      [class.border-stone-200]="edge.style !== 'dashed'"
+                      [class.dark:border-stone-700]="edge.style !== 'dashed'"
+                    >Dashed</button>
+                  </div>
+                </div>
+
+                <!-- Delete -->
+                <button (click)="deleteSelected()" class="props-action-btn props-action-btn--danger">
+                  <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+                  Delete Edge (Del)
+                </button>
+
+              </div>
+            }
+
+            @if (selectedNodeIds().size > 1) {
+              <div class="px-4 py-3 text-xs text-stone-500 dark:text-stone-400">
+                <p class="font-medium">{{ selectedNodeIds().size }} nodes selected</p>
+                <div class="flex flex-col gap-1 mt-3">
+                  <button (click)="duplicateSelected()" class="props-action-btn">Duplicate all</button>
+                  <button (click)="deleteSelected()" class="props-action-btn props-action-btn--danger">Delete all</button>
+                </div>
+              </div>
+            }
+
+          </div>
+        }
+
+      </div>
+    }
+
+  </div>
+
+</div>
+
+<!-- Context menu -->
+@if (contextMenu(); as ctx) {
+  <div
+    class="fixed z-50 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg shadow-lg py-1 min-w-36 text-xs animate-slide-in"
+    [style.left.px]="ctx.x"
+    [style.top.px]="ctx.y"
+    (mouseleave)="hideContextMenu()"
+  >
+    <button class="ctx-item" (click)="startRenaming(ctx.diagramId, getDiagramName(ctx.diagramId)); hideContextMenu()">
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"/></svg>
+      Rename
+    </button>
+    <button class="ctx-item" (click)="duplicateDiagram(ctx.diagramId); hideContextMenu()">
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75"/></svg>
+      Duplicate
+    </button>
+    <div class="h-px bg-stone-100 dark:bg-stone-800 my-1"></div>
+    <button class="ctx-item ctx-item--danger" (click)="deleteDiagramItem(ctx.diagramId); hideContextMenu()">
+      <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+      Delete
+    </button>
+  </div>
+}

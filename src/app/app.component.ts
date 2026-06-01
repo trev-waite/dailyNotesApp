@@ -19,9 +19,10 @@ import { OutgoingTodosComponent } from './components/outgoing-todos/outgoing-tod
 import { SettingsComponent } from './components/settings/settings.component';
 import { HistoryTimelineComponent } from './components/history-timeline/history-timeline.component';
 import { SearchPanelComponent } from './components/search-panel/search-panel.component';
+import { DiagramEditorComponent } from './components/diagram-editor/diagram-editor.component';
 
 type SaveStatus = 'idle' | 'saving' | 'saved';
-type ActiveView = 'editor' | 'calendar' | 'timeline' | 'search';
+type ActiveView = 'editor' | 'calendar' | 'timeline' | 'search' | 'diagrams';
 
 const CALENDAR_ALWAYS_VISIBLE_KEY = 'calendarAlwaysVisible';
 
@@ -35,6 +36,7 @@ const CALENDAR_ALWAYS_VISIBLE_KEY = 'calendarAlwaysVisible';
     SettingsComponent,
     HistoryTimelineComponent,
     SearchPanelComponent,
+    DiagramEditorComponent,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
