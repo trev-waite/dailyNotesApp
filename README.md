@@ -20,9 +20,9 @@ Built with Angular 21 and Tauri 2.
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 20 or later (Could also use bun - if so replace all `npm` usage wih `bun`)
+- [Bun](https://bun.sh/) 1.0 or later
 - [Rust](https://www.rust-lang.org/tools/install) (stable toolchain)
-- Tauri CLI (installed automatically via npm)
+- Tauri CLI (installed automatically via Bun)
 
 On macOS you will also need Xcode Command Line Tools:
 
@@ -37,7 +37,7 @@ xcode-select --install
 ```bash
 git clone <repo-url>
 cd dailyNotesApp
-npm install
+bun install
 ```
 
 ---
@@ -45,7 +45,7 @@ npm install
 ## Development
 
 ```bash
-npm run tauri dev
+bun run tauri dev
 ```
 
 This starts the Angular dev server and opens the Tauri desktop window. Hot reload is enabled for the frontend.
@@ -57,7 +57,7 @@ On first launch the app will ask you to pick a folder where notes are stored. Th
 ## Build
 
 ```bash
-npm run tauri build
+bun run tauri build
 ```
 
 Produces a native app bundle in `src-tauri/target/release/bundle/`.
