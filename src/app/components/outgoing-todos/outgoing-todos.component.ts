@@ -1,5 +1,6 @@
 import {
   Component,
+  HostListener,
   OnInit,
   computed,
   inject,
@@ -56,6 +57,101 @@ export class OutgoingTodosComponent implements OnInit {
   readonly checkedCount = computed(() => this.todos().filter((t) => t.checked).length);
   readonly totalCount = computed(() => this.todos().length);
 
+  readonly editingKey = signal<string | null>(null);
+  readonly editingText = signal('');
+
+  todoKey(todo: TodoItem): string {
+    return `${todo.date}:${todo.lineIndex}`;
+  }
+
+  private pendingEditTodo: TodoItem | null = null;
+  private pendingSubtaskTodo: TodoItem | null = null;
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    if (this.pendingEditTodo) void this.saveEdit(this.pendingEditTodo);
+    if (this.pendingSubtaskTodo) void this.finishAddSubtask(this.pendingSubtaskTodo);
+  }
+
+  startEdit(todo: TodoItem): void {
+    this.editingKey.set(this.todoKey(todo));
+    this.editingText.set(todo.text);
+    this.pendingEditTodo = todo;
+  }
+
+  cancelEdit(): void {
+    this.editingKey.set(null);
+    this.editingText.set('');
+    this.pendingEditTodo = null;
+  }
+
+  async saveEdit(todo: TodoItem): Promise<void> {
+    if (this.editingKey() !== this.todoKey(todo)) return;
+    this.pendingEditTodo = null;
+    const newText = this.editingText().trim();
+    this.editingKey.set(null);
+    if (!newText || newText === todo.text) return;
+
+    const contents = new Map(this.todoContents());
+    const content = contents.get(todo.date) ?? '';
+    const updated = this.markdown.editTodoText(content, todo.lineIndex, newText);
+    contents.set(todo.date, updated);
+    this.todoContents.set(contents);
+    await this.storage.writeTodos(todo.date, updated);
+  }
+
+  readonly addingSubtaskFor = signal<string | null>(null);
+  readonly newSubtaskText = signal('');
+
+  startAddSubtask(todo: TodoItem): void {
+    this.addingSubtaskFor.set(this.todoKey(todo));
+    this.newSubtaskText.set('');
+    this.pendingSubtaskTodo = todo;
+  }
+
+  cancelAddSubtask(): void {
+    this.addingSubtaskFor.set(null);
+    this.newSubtaskText.set('');
+    this.pendingSubtaskTodo = null;
+  }
+
+  async saveSubtask(todo: TodoItem): Promise<void> {
+    const text = this.newSubtaskText().trim();
+    this.newSubtaskText.set('');
+    if (!text) return;
+
+    const contents = new Map(this.todoContents());
+    const lines = (contents.get(todo.date) ?? '').split('\n');
+    let insertAt = todo.lineIndex + 1;
+    while (insertAt < lines.length && this.markdown.isChildTodoLine(lines[insertAt])) {
+      insertAt++;
+    }
+    lines.splice(insertAt, 0, `  - [ ] ${text}`);
+    const updated = lines.join('\n');
+    contents.set(todo.date, updated);
+    this.todoContents.set(contents);
+    await this.storage.writeTodos(todo.date, updated);
+  }
+
+  async finishAddSubtask(todo: TodoItem): Promise<void> {
+    this.pendingSubtaskTodo = null;
+    await this.saveSubtask(todo);
+    this.addingSubtaskFor.set(null);
+  }
+
+  async deleteTodo(todo: TodoItem): Promise<void> {
+    this.cancelEdit();
+    if (this.addingSubtaskFor() === this.todoKey(todo)) this.cancelAddSubtask();
+
+    const contents = new Map(this.todoContents());
+    const content = contents.get(todo.date) ?? '';
+    const updated = this.markdown.deleteTodoLine(content, todo.lineIndex);
+    contents.set(todo.date, updated);
+    this.todoContents.set(contents);
+    await this.storage.writeTodos(todo.date, updated);
+    this.todoToggled.emit();
+  }
+
   async ngOnInit(): Promise<void> {
     await this.loadAll();
   }
@@ -83,7 +179,7 @@ export class OutgoingTodosComponent implements OnInit {
       const originalLines = (contents.get(todo.date) ?? '').split('\n');
       const linesToMove = [todo.lineIndex];
       for (let i = todo.lineIndex + 1; i < originalLines.length; i++) {
-        if (/^\s+-\s\[[ xX]\]/.test(originalLines[i])) {
+        if (this.markdown.isChildTodoLine(originalLines[i])) {
           linesToMove.push(i);
         } else {
           break;

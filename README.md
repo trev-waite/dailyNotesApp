@@ -30,6 +30,34 @@ On macOS you will also need Xcode Command Line Tools:
 xcode-select --install
 ```
 
+### Installing Rust
+
+Use **one** of the following methods — mixing them can leave broken `cargo`/`rustc` symlinks in `~/.cargo/bin`.
+
+**Option A — official installer (recommended):**
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+This adds `~/.cargo/bin` to your `PATH` automatically (via `~/.cargo/env`, sourced from your shell profile).
+
+**Option B — Homebrew:**
+
+```bash
+brew install rustup
+rustup default stable
+```
+
+Homebrew's `rustup` is keg-only and does not touch `~/.cargo/bin`. Add its shims to your `PATH` instead:
+
+```bash
+echo 'export PATH="/usr/local/opt/rustup/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+If you previously installed Rust via the official installer and later switched to Homebrew (or vice versa), verify `which cargo` resolves to a working binary — stale symlinks from the old install can shadow the new one.
+
 ---
 
 ## Setup

@@ -1,6 +1,18 @@
 <div class="h-full flex flex-col">
   <!-- Reusable checkbox + label fragment -->
   <ng-template #checkboxItem let-todo>
+    @if (editingKey() === todoKey(todo)) {
+      <button
+        (click)="$event.stopPropagation(); deleteTodo(todo)"
+        class="self-center flex-shrink-0 w-4 h-4 flex items-center justify-center text-stone-400 hover:text-red-500 transition-colors"
+        [attr.aria-label]="'Delete: ' + todo.text"
+        title="Delete"
+      >
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    }
     <button
       (click)="toggleTodo(todo)"
       class="mt-0.5 flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center transition-colors"
@@ -20,13 +32,29 @@
         </svg>
       }
     </button>
-    <span
-      class="text-sm leading-snug"
-      [class.text-stone-700]="!todo.checked"
-      [class.dark:text-stone-300]="!todo.checked"
-      [class.text-stone-400]="todo.checked"
-      [class.line-through]="todo.checked"
-    >{{ todo.text }}</span>
+    @if (editingKey() === todoKey(todo)) {
+      <input
+        type="text"
+        [value]="editingText()"
+        (click)="$event.stopPropagation()"
+        (input)="editingText.set($any($event.target).value)"
+        (blur)="saveEdit(todo)"
+        (keydown.enter)="$any($event.target).blur()"
+        (keydown.escape)="cancelEdit()"
+        autofocus
+        [style.width.ch]="editingText().length + 1"
+        class="flex-none min-w-[2ch] text-sm bg-transparent text-stone-700 dark:text-stone-300 focus:outline-none border-b border-stone-300 dark:border-stone-600"
+      />
+    } @else {
+      <span
+        (click)="$event.stopPropagation(); startEdit(todo)"
+        class="text-sm leading-snug cursor-text"
+        [class.text-stone-700]="!todo.checked"
+        [class.dark:text-stone-300]="!todo.checked"
+        [class.text-stone-400]="todo.checked"
+        [class.line-through]="todo.checked"
+      >{{ todo.text }}</span>
+    }
   </ng-template>
 
   <!-- Todo list + inline input -->
@@ -34,9 +62,19 @@
     @if (todos().length > 0) {
       <ul class="px-5 pt-3 pb-1 space-y-2">
         @for (todo of todos(); track todo.date + ':' + todo.lineIndex) {
-          <li>
+          <li class="group">
             <div class="flex items-start gap-3">
               <ng-container *ngTemplateOutlet="checkboxItem; context: {$implicit: todo}"></ng-container>
+              <button
+                (click)="$event.stopPropagation(); startAddSubtask(todo)"
+                class="self-center flex-shrink-0 w-4 h-4 flex items-center justify-center text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                [attr.aria-label]="'Add subtask to: ' + todo.text"
+                title="Add subtask"
+              >
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+              </button>
             </div>
             @if (todo.children?.length) {
               <ul class="ml-7 mt-1 space-y-1">
@@ -46,6 +84,22 @@
                   </li>
                 }
               </ul>
+            }
+            @if (addingSubtaskFor() === todoKey(todo)) {
+              <div class="ml-7 mt-1 flex items-start gap-2" (click)="$event.stopPropagation()">
+                <span class="w-4 h-4 flex-shrink-0"></span>
+                <input
+                  type="text"
+                  placeholder="Add subtask…"
+                  [value]="newSubtaskText()"
+                  (input)="newSubtaskText.set($any($event.target).value)"
+                  (keydown.enter)="saveSubtask(todo)"
+                  (keydown.escape)="cancelAddSubtask()"
+                  (blur)="finishAddSubtask(todo)"
+                  autofocus
+                  class="flex-1 text-sm bg-transparent text-stone-700 dark:text-stone-300 placeholder-stone-300 dark:placeholder-stone-600 focus:outline-none"
+                />
+              </div>
             }
           </li>
         }

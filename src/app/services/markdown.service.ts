@@ -67,6 +67,36 @@ export class MarkdownService {
     return lines.join('\n');
   }
 
+  editTodoText(content: string, lineIndex: number, newText: string): string {
+    const lines = content.split('\n');
+    const line = lines[lineIndex] ?? '';
+    const match = /^(\s*-\s\[[ xX]\]\s)/.exec(line);
+    if (match) {
+      lines[lineIndex] = `${match[1]}${newText}`;
+    }
+    return lines.join('\n');
+  }
+
+  isChildTodoLine(line: string): boolean {
+    return /^\s+-\s\[[ xX]\]/.test(line);
+  }
+
+  /** Removes a todo line. If the line is a top-level todo, its indented child lines are removed too. */
+  deleteTodoLine(content: string, lineIndex: number): string {
+    const lines = content.split('\n');
+    const toRemove = [lineIndex];
+    if (!this.isChildTodoLine(lines[lineIndex] ?? '')) {
+      for (let i = lineIndex + 1; i < lines.length; i++) {
+        if (!this.isChildTodoLine(lines[i])) break;
+        toRemove.push(i);
+      }
+    }
+    for (const idx of [...toRemove].reverse()) {
+      lines.splice(idx, 1);
+    }
+    return lines.join('\n');
+  }
+
   /** Serialize a contenteditable div's HTML back to markdown source. */
   toMarkdown(element: HTMLElement): string {
     const result = Array.from(element.childNodes)
